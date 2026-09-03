@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { ArrowRight, Menu, Search, Star, X } from "lucide-react";
+import { DiscordMark, LogoMark, TelegramMark, XMark, YoutubeMark } from "./BrandIcons";
 import type { ReactNode } from "react";
 import { api, queryString } from "../lib/api";
 import { useCategories, useSettings } from "../lib/queries";
@@ -134,13 +135,14 @@ function Header() {
     <header className="topbar">
       <div className="container nav">
         <Link className="brand" to="/">
-          <span className="brand-mark">◆</span>
+          <span className="brand-mark"><LogoMark size={19} /></span>
           <span>{siteName.slice(0, 4)}<span>{siteName.slice(4) || "Hub"}</span></span>
         </Link>
         <button className="mobile-menu" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
           {menuOpen ? <X /> : <Menu />}
         </button>
         <nav className={menuOpen ? "nav-links open" : "nav-links"}>
+          <NavLink to="/" end>Home</NavLink>
           {links.map((link) => (
             <NavLink key={link.to} to={link.to}>{link.label}</NavLink>
           ))}
@@ -163,10 +165,22 @@ function Footer() {
       <div className="container footer-grid">
         <div>
           <div className="brand">
-            <span className="brand-mark">◆</span>
+            <span className="brand-mark"><LogoMark size={19} /></span>
             <span>{siteName.slice(0, 4)}<span>{siteName.slice(4) || "Hub"}</span></span>
           </div>
           <p>{footer?.about}</p>
+          <div className="social-row">
+            {[
+              { label: "Discord", Icon: DiscordMark },
+              { label: "X", Icon: XMark },
+              { label: "YouTube", Icon: YoutubeMark },
+              { label: "Telegram", Icon: TelegramMark }
+            ].map(({ label, Icon }) => (
+              <span className="social-chip" key={label} title={label} aria-label={label}>
+                <Icon size={15} />
+              </span>
+            ))}
+          </div>
         </div>
         {(footer?.columns ?? []).map((column) => (
           <div key={column.title}>
@@ -176,16 +190,12 @@ function Footer() {
             ))}
           </div>
         ))}
-        {settings?.features.newsletterEnabled && footer?.newsletter ? (
-          <div>
-            <b>{footer.newsletter.title}</b>
-            <p>{footer.newsletter.text}</p>
-            <form className="newsletter" onSubmit={(event) => event.preventDefault()}>
-              <input placeholder={footer.newsletter.placeholder} aria-label="Email address" type="email" />
-              <button type="submit" aria-label="Subscribe"><ArrowRight size={16} /></button>
-            </form>
-          </div>
-        ) : null}
+        <div className="status-card">
+          <b>Server status</b>
+          <div className="status-line"><i /> All systems operational</div>
+          <div className="status-line"><i /> API operational</div>
+          <div className="status-line"><i /> Downloads operational</div>
+        </div>
       </div>
       <div className="container copyright">{footer?.copyright}</div>
     </footer>

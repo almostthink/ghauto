@@ -1,6 +1,10 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, ChevronDown, Check, Search, Sparkles } from "lucide-react";
+import {
+  ArrowRight, BadgeCheck, ChevronDown, Check, Download, Mail, Package,
+  RefreshCw, Search, ShieldCheck, Sparkles, Star, Users
+} from "lucide-react";
+import { EthereumMark, GamepadMark, RobloxMark, WindowsMark } from "../components/BrandIcons";
 import { CategoryIcon } from "../components/icons";
 import { ProductCard, ProductRow } from "../components/ProductCard";
 import { EmptyState, ErrorState, SkeletonCards, useDebounced } from "../components/ui";
@@ -36,11 +40,21 @@ function HeroBlock({ data }: { data: Data }) {
     );
   }
 
+  // Trust badges under the buttons. Editable from the CMS, with sensible
+  // defaults so the row is never empty.
+  const trust = list<{ label: string; icon?: string }>(data, "trust");
+  const trustIcons: Record<string, typeof ShieldCheck> = {
+    shield: ShieldCheck,
+    refresh: RefreshCw,
+    verified: BadgeCheck
+  };
+  const image = str(data, "image");
+
   return (
     <section className="hero">
       <div className="container hero-inner">
         <div className="hero-copy">
-          {eyebrow ? <span className="eyebrow"><Sparkles size={14} /> {eyebrow}</span> : null}
+          {eyebrow ? <span className="hero-badge"><Sparkles size={12} /> {eyebrow}</span> : null}
           <h1>{title}<br /><em>{accent}</em></h1>
           <p>{str(data, "subtitle")}</p>
           <div className="hero-actions">
@@ -53,11 +67,33 @@ function HeroBlock({ data }: { data: Data }) {
               <Link className="btn ghost" to={str(data, "secondaryHref", "/")}>{str(data, "secondaryLabel")}</Link>
             ) : null}
           </div>
+
+          {trust.length ? (
+            <div className="trust-row">
+              {trust.map((item) => {
+                const Icon = trustIcons[item.icon ?? "shield"] ?? ShieldCheck;
+                return (
+                  <span key={item.label}><Icon size={14} /> {item.label}</span>
+                );
+              })}
+            </div>
+          ) : null}
         </div>
+
         <div className="hero-art">
           <div className="orb o1" />
           <div className="orb o2" />
-          <div className="cube"><div>▣</div><div>◈</div><div>⬢</div><div>Ξ</div></div>
+          {image ? (
+            <img className="hero-image" src={image} alt="" />
+          ) : (
+            // The four platforms the catalog covers, on the faces of the cube.
+            <div className="cube">
+              <span className="cube-face windows"><WindowsMark size={34} /></span>
+              <span className="cube-face game"><GamepadMark size={34} /></span>
+              <span className="cube-face crypto"><EthereumMark size={34} /></span>
+              <span className="cube-face roblox"><RobloxMark size={34} /></span>
+            </div>
+          )}
         </div>
       </div>
     </section>
@@ -94,7 +130,7 @@ function TextBlock({ data }: { data: Data }) {
 
 // --- stats ----------------------------------------------------------------
 
-interface StatItem { label: string; source?: string; value?: string }
+interface StatItem { label: string; source?: string; value?: string; icon?: string }
 
 function StatsBlock({ data }: { data: Data }) {
   const { data: products } = useProducts({ perPage: 1 });
@@ -119,15 +155,30 @@ function StatsBlock({ data }: { data: Data }) {
     }
   };
 
+  const icons: Record<string, typeof Package> = {
+    products: Package,
+    categories: Package,
+    downloads: Download,
+    rating: Star,
+    users: Users,
+    safe: ShieldCheck
+  };
+
   return (
-    <section className="stats">
+    <section className="section stats-section">
       <div className="container stats-grid">
-        {list<StatItem>(data, "items").map((item) => (
-          <div key={item.label}>
-            <b>{resolve(item)}</b>
-            <span>{item.label}</span>
-          </div>
-        ))}
+        {list<StatItem>(data, "items").map((item) => {
+          const Icon = icons[item.icon ?? item.source ?? "products"] ?? Package;
+          return (
+            <div className="stat-tile" key={item.label}>
+              <span className="stat-icon"><Icon size={17} /></span>
+              <div>
+                <b>{resolve(item)}</b>
+                <span>{item.label}</span>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </section>
   );
@@ -147,12 +198,15 @@ function CategoriesBlock({ data }: { data: Data }) {
         <div className="category-grid">
           {(categories?.items ?? []).map((category) => (
             <Link className="category-card" to={`/${category.slug}`} key={category.id}>
-              <div className="cat-icon" style={{ color: category.accent, background: `${category.accent}15` }}>
-                <CategoryIcon name={category.icon} />
+              <div className="cat-icon" style={{ color: category.accent, background: `${category.accent}1a` }}>
+                <CategoryIcon name={category.icon} size={26} />
               </div>
               <h3>{category.name}</h3>
               <p>{category.description}</p>
-              <b>{category.productCount} Tools <ArrowRight size={14} /></b>
+              <div className="category-foot">
+                <b style={{ color: category.accent }}>{category.productCount} Tools</b>
+                <span className="round-arrow"><ArrowRight size={13} /></span>
+              </div>
             </Link>
           ))}
         </div>
@@ -210,17 +264,23 @@ function FeaturedBlock({ data }: { data: Data }) {
 function ProductGridBlock({ data }: { data: Data }) {
   const layout = str(data, "layout", "grid");
   const showFilters = data.showFilters === true;
+  const parentSlug = str(data, "category");
+
   const [term, setTerm] = useState("");
-  const [price, setPrice] = useState("any");
   const [sort, setSort] = useState(str(data, "sort", "popular"));
+  // Catalog pages filter by subcategory (Drivers, Security, ...) rather than
+  // by price: the licence is already on every card.
+  const [subcategory, setSubcategory] = useState("");
   const debounced = useDebounced(term, 250);
 
   const { data: settings } = useSettings();
+  const { data: categories } = useCategories();
+  const children = categories?.items.find((category) => category.slug === parentSlug)?.children ?? [];
+
   const { data: products, isLoading, error, refetch } = useProducts({
-    category: str(data, "category") || undefined,
+    category: subcategory || parentSlug || undefined,
     tag: str(data, "tag") || undefined,
     q: debounced || undefined,
-    price: price === "any" ? undefined : price,
     sort,
     perPage: num(data, "limit", showFilters ? 48 : 8)
   });
@@ -249,18 +309,27 @@ function ProductGridBlock({ data }: { data: Data }) {
                   aria-label="Filter tools"
                 />
               </div>
-              <div className="chips">
-                {["any", "free", "premium"].map((option) => (
+              {children.length ? (
+                <div className="chips">
                   <button
                     type="button"
-                    key={option}
-                    className={price === option ? "chip active" : "chip"}
-                    onClick={() => setPrice(option)}
+                    className={subcategory === "" ? "chip active" : "chip"}
+                    onClick={() => setSubcategory("")}
                   >
-                    {option === "any" ? "All" : option === "free" ? "Free" : "Premium"}
+                    All
                   </button>
-                ))}
-              </div>
+                  {children.map((child) => (
+                    <button
+                      type="button"
+                      key={child.id}
+                      className={subcategory === child.slug ? "chip active" : "chip"}
+                      onClick={() => setSubcategory(child.slug)}
+                    >
+                      {child.name}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
               <select value={sort} onChange={(event) => setSort(event.target.value)} aria-label="Sort by">
                 <option value="popular">Popular</option>
                 <option value="rating">Top rated</option>
@@ -280,7 +349,7 @@ function ProductGridBlock({ data }: { data: Data }) {
         {products && products.items.length === 0 ? (
           <EmptyState
             title="Nothing matches those filters"
-            text="Try a different search term, or clear the price filter to see the whole category."
+            text="Try a different search term, or pick another section of the catalog."
           />
         ) : null}
 
@@ -352,10 +421,11 @@ function NewsletterBlock({ data }: { data: Data }) {
   return (
     <section className="section">
       <div className="container">
-        <div className="cta-panel newsletter-panel">
+        <div className="newsletter-panel">
+          <span className="newsletter-icon"><Mail size={20} /></span>
           <div>
-            <h2>{str(data, "title", "Stay in the loop")}</h2>
-            <p>{str(data, "text", "New tools and version updates, no noise.")}</p>
+            <h2>{str(data, "title", "Stay updated")}</h2>
+            <p>{str(data, "text", "New tools and version updates, delivered to your inbox.")}</p>
           </div>
           <form
             className="newsletter wide-newsletter"
@@ -364,10 +434,9 @@ function NewsletterBlock({ data }: { data: Data }) {
               setDone(true);
             }}
           >
-            <input type="email" required placeholder={str(data, "placeholder", "Your email")} aria-label="Email address" />
-            <button type="submit" aria-label="Subscribe"><ArrowRight size={16} /></button>
+            <input type="email" required placeholder={str(data, "placeholder", "Enter your email address")} aria-label="Email address" />
+            <button type="submit">{done ? "Subscribed" : "Subscribe"}</button>
           </form>
-          {done ? <small className="form-note">Thanks, you are on the list.</small> : null}
         </div>
       </div>
     </section>

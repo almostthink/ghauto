@@ -10,7 +10,6 @@ export function SearchPage() {
   const [params, setParams] = useSearchParams();
   const [term, setTerm] = useState(params.get("q") ?? "");
   const [category, setCategory] = useState(params.get("category") ?? "");
-  const [price, setPrice] = useState(params.get("price") ?? "any");
   const [minRating, setMinRating] = useState(params.get("minRating") ?? "");
   const [sort, setSort] = useState(params.get("sort") ?? "popular");
   const debounced = useDebounced(term, 250);
@@ -19,7 +18,6 @@ export function SearchPage() {
   const { data, isLoading, error, refetch } = useProducts({
     q: debounced || undefined,
     category: category || undefined,
-    price: price === "any" ? undefined : price,
     minRating: minRating ? Number(minRating) : undefined,
     sort,
     perPage: 48
@@ -58,16 +56,18 @@ export function SearchPage() {
               aria-label="Search tools"
             />
           </div>
+          {/* Categories and their subcategories in one list, so a visitor can
+              narrow straight to Drivers or Security. */}
           <select value={category} onChange={(event) => update("category", event.target.value, setCategory)} aria-label="Category">
             <option value="">All categories</option>
             {(categories?.items ?? []).map((item) => (
-              <option key={item.id} value={item.slug}>{item.name}</option>
+              <optgroup key={item.id} label={item.name}>
+                <option value={item.slug}>All {item.name}</option>
+                {item.children.map((child) => (
+                  <option key={child.id} value={child.slug}>{child.name}</option>
+                ))}
+              </optgroup>
             ))}
-          </select>
-          <select value={price} onChange={(event) => update("price", event.target.value, setPrice)} aria-label="License">
-            <option value="any">Any license</option>
-            <option value="free">Free</option>
-            <option value="premium">Premium</option>
           </select>
           <select value={minRating} onChange={(event) => update("minRating", event.target.value, setMinRating)} aria-label="Minimum rating">
             <option value="">Any rating</option>

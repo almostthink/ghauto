@@ -6,16 +6,16 @@ import { COUNTRIES } from "../server/lib/countries.js";
 const prisma = new PrismaClient();
 
 const CATEGORIES = [
-  { slug: "windows", name: "Windows Tools", icon: "shield-check", accent: "#8b5cf6", position: 0,
+  { slug: "windows", name: "Windows Tools", icon: "windows", accent: "#4da3ff", position: 0,
     description: "System utilities, optimization and productivity software for Windows.",
     children: ["Optimization", "Security", "Drivers"] },
-  { slug: "game", name: "Game Tools", icon: "gamepad-2", accent: "#5ee7ff", position: 1,
+  { slug: "game", name: "Game Tools", icon: "gamepad", accent: "#b98cff", position: 1,
     description: "Utilities that improve how you play, record and tune your games.",
     children: ["Trainers", "Overlays", "Recording"] },
-  { slug: "roblox", name: "Roblox Tools", icon: "grid-2x2", accent: "#f6c453", position: 2,
+  { slug: "roblox", name: "Roblox Tools", icon: "roblox", accent: "#e6ecff", position: 2,
     description: "Studio helpers, asset utilities and quality-of-life tools for Roblox creators.",
     children: ["Studio", "Assets"] },
-  { slug: "crypto", name: "Crypto Tools", icon: "wallet", accent: "#51d88a", position: 3,
+  { slug: "crypto", name: "Crypto Tools", icon: "ethereum", accent: "#9d7bff", position: 3,
     description: "Wallets, portfolio trackers and on-chain analytics.",
     children: ["Wallets", "Analytics", "Trading"] }
 ];
@@ -132,26 +132,34 @@ const FAQ_ITEMS = [
 function homeBlocks() {
   return [
     { type: "hero", data: {
-      eyebrow: "ALL-IN-ONE SOLUTION",
+      eyebrow: "THE LARGEST COLLECTION",
       title: "Ultimate Tools",
       titleAccent: "Collection",
-      subtitle: "The biggest selection of tools for Windows, Games, Roblox and Crypto. Verified details, real versions and links to the official source.",
+      subtitle: "The biggest collection of tools for Windows, Games, Roblox and Crypto. Verified details, real versions and links to the official source.",
       primaryLabel: "Browse Tools", primaryHref: "/windows",
-      secondaryLabel: "Explore Categories", secondaryHref: "/about"
+      secondaryLabel: "Explore Categories", secondaryHref: "/about",
+      // Replace the cube with your own artwork by setting `image` in the CMS.
+      image: "",
+      trust: [
+        { label: "100% Safe", icon: "shield" },
+        { label: "Regular Updates", icon: "refresh" },
+        { label: "Verified Tools", icon: "verified" }
+      ]
     } },
     { type: "categories", data: { title: "Browse by Categories", text: "Explore our range of tools across different categories" } },
-    { type: "featuredProducts", data: { title: "Featured Tools", text: "Handpicked tools you might need", limit: 4, actionLabel: "View All", actionHref: "/windows" } },
+    { type: "featuredProducts", data: { title: "Featured Tools", text: "Handpicked tools you might need", limit: 6, actionLabel: "View All", actionHref: "/windows" } },
     { type: "productGrid", data: { title: "Most Downloaded", text: "What the catalog is downloading this month", sort: "downloads", limit: 8 } },
     { type: "stats", data: { items: [
-      { label: "Total Tools", source: "products" },
-      { label: "Categories", source: "categories" },
-      { label: "Total Downloads", source: "downloads" },
-      { label: "Average Rating", source: "rating" }
+      { label: "Total Tools", source: "products", icon: "products" },
+      { label: "Categories", source: "categories", icon: "categories" },
+      { label: "Total Downloads", source: "downloads", icon: "downloads" },
+      { label: "Average Rating", source: "rating", icon: "rating" },
+      { label: "Safe & Verified", source: "custom", value: "100%", icon: "safe" }
     ] } },
-    { type: "cta", data: {
-      title: "Missing a tool you rely on?",
-      text: "Send it over and it will be reviewed for the catalog.",
-      buttonLabel: "Read the FAQ", buttonHref: "/faq"
+    { type: "newsletter", data: {
+      title: "Stay Updated",
+      text: "Get the latest tools and updates delivered to your inbox",
+      placeholder: "Enter your email address"
     } }
   ];
 }
@@ -181,7 +189,7 @@ async function main() {
   for (const category of CATEGORIES) {
     const parent = await prisma.category.upsert({
       where: { slug: category.slug },
-      update: {},
+      update: { icon: category.icon, accent: category.accent },
       create: {
         slug: category.slug,
         name: category.name,
@@ -391,9 +399,13 @@ async function main() {
       ] }
   ];
 
+  // Pages are content, so an existing one is never overwritten by accident.
+  // SEED_FORCE_PAGES=1 rebuilds them from these defaults, discarding CMS edits.
+  const forcePages = process.env.SEED_FORCE_PAGES === "1";
   for (const page of pages) {
     const existing = await prisma.page.findUnique({ where: { slug: page.slug } });
-    if (existing) continue;
+    if (existing && !forcePages) continue;
+    if (existing) await prisma.page.delete({ where: { id: existing.id } });
     await prisma.page.create({
       data: {
         slug: page.slug,

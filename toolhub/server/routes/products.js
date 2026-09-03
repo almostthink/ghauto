@@ -282,7 +282,9 @@ productsRouter.delete("/:id/file", requireAuth, route(async (req, res) => {
   await deleteStoredFile(product.fileKey);
   const updated = await prisma.product.update({
     where: { id: product.id },
-    data: { fileKey: "", fileName: "", fileBytes: 0 },
+    // fileSize was filled in from the upload, so it goes with the file rather
+    // than being left behind advertising a size nothing has any more.
+    data: { fileKey: "", fileName: "", fileBytes: 0, fileSize: "" },
     include: productInclude
   });
   await audit(req, "product.file_delete", "product", product.id, {});

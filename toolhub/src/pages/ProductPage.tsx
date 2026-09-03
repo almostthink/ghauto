@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import {
-  BadgeCheck, Check, Download, ExternalLink, Flag, Globe, History, Monitor, Star
-} from "lucide-react";
+import { BadgeCheck, Check, Download, Flag, Globe, History, Monitor, Star } from "lucide-react";
 import { ProductCard } from "../components/ProductCard";
 import { Turnstile } from "../components/Turnstile";
 import { ErrorState, Skeleton, StarRating, useToast } from "../components/ui";
@@ -131,6 +129,7 @@ export function ProductPage() {
   const { data: related } = useRelatedProducts(slug);
   const { data: settings } = useSettings();
   const [activeImage, setActiveImage] = useState(0);
+  const [coverBroken, setCoverBroken] = useState(false);
   const [reported, setReported] = useState(false);
   const toast = useToast();
 
@@ -205,7 +204,13 @@ export function ProductPage() {
         <div className="product-hero-card">
           <div>
             <div className="product-cover">
-              {cover ? <img src={cover} alt={product.name} /> : <div className="image-fallback large">{product.name.slice(0, 2)}</div>}
+              {cover && !coverBroken ? (
+                <img src={cover} alt={product.name} onError={() => setCoverBroken(true)} />
+              ) : (
+                <div className="image-fallback large">
+                  {product.name.replace(/[^A-Za-z0-9]/g, "").slice(0, 2).toUpperCase()}
+                </div>
+              )}
               <span className="cover-glow" />
             </div>
             {shots.length > 1 ? (
@@ -250,11 +255,6 @@ export function ProductPage() {
               <a className="btn primary" href={`/api/products/${product.id}/download`} rel="nofollow noopener">
                 <Download size={17} /> {product.hasFile ? `Download${product.fileBytes ? ` (${formatBytes(product.fileBytes)})` : ""}` : "Download"}
               </a>
-              {product.officialUrl ? (
-                <a className="btn ghost" href={product.officialUrl} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink size={16} /> Official website
-                </a>
-              ) : null}
             </div>
 
             <div className="detail-stats">
