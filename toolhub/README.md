@@ -35,6 +35,199 @@ npm run build && npm start   # Express отдаёт dist/ и API с одного
 (по умолчанию `admin@toolhub.local` / `ChangeMe123!`). **Смените пароль сразу
 после первого входа.**
 
+## Деплой на сервер
+
+Ниже полный путь для чистого Ubuntu 22.04/24.04 с nginx и systemd. Домен в
+примерах `example.com`, каталог приложения `/opt/toolhub`, файлы продуктов и
+картинки вынесены в `/var/lib/toolhub`, чтобы деплой их не затирал.
+
+### 1. Пакеты
+
+```bash
+sudo apt update
+sudo apt install -y curl git nginx postgresql
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt install -y nodejs
+```
+
+### 2. База данных
+
+```bash
+sudo -u postgres psql -c "CREATE USER toolhub WITH PASSWORD 'СИЛЬНЫЙ_ПАРОЛЬ';"
+sudo -u postgres psql -c "CREATE DATABASE toolhub OWNER toolhub;"
+```
+
+### 3. Пользователь и каталоги
+
+```bash
+sudo useradd --system --home /opt/toolhub --shell /usr/sbin/nologin toolhub
+sudo mkdir -p /opt/toolhub /var/lib/toolhub/products /var/lib/toolhub/uploads
+sudo chown -R toolhub:toolhub /opt/toolhub /var/lib/toolhub
+```
+
+### 4. Код и сборка
+
+```bash
+sudo -u toolhub git clone https://github.com/<owner>/<repo>.git /opt/toolhub/src
+cd /opt/toolhub/src/toolhub
+sudo -u toolhub npm ci
+sudo -u toolhub cp .env.example .env
+sudo -u toolhub nano .env          # см. пункт 5
+sudo -u toolhub npx prisma generate
+sudo -u toolhub npm run db:migrate  # prisma migrate deploy
+sudo -u toolhub npm run db:seed     # только при первой установке
+sudo -u toolhub VITE_ADMIN_PATH=/p-7f3a91 npm run build
+```
+
+`VITE_ADMIN_PATH` подставляется на этапе сборки, поэтому путь к панели попадает
+в бандл. Он должен совпадать с `ADMIN_PATH` в `.env`, иначе `robots.txt` будет
+закрывать не тот адрес.
+
+### 5. Переменные окружения
+
+```ini
+DATABASE_URL="postgresql://toolhub:СИЛЬНЫЙ_ПАРОЛЬ@localhost:5432/toolhub?schema=public"
+NODE_ENV=production
+PORT=4000
+PUBLIC_SITE_URL="https://example.com"
+CORS_ORIGINS="https://example.com"
+
+# 64 случайных символа: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+JWT_SECRET="..."
+SESSION_TTL_HOURS=12
+COOKIE_SECURE=1
+
+ADMIN_PATH=/p-7f3a91
+
+PRODUCTS_DIR=/var/lib/toolhub/products
+PRODUCT_FILE_MAX_MB=512
+STORAGE_DRIVER=local
+
+SEED_ADMIN_EMAIL="you@example.com"
+SEED_ADMIN_PASSWORD="временный-пароль-смените-после-входа"
+```
+
+`COOKIE_SECURE=1` обязателен под HTTPS, иначе браузер не сохранит cookie
+сессии. В production сервер не стартует, если `JWT_SECRET` короче 32 символов.
+
+Если картинки хотите хранить в S3/R2, а не на диске, поставьте
+`STORAGE_DRIVER=s3` и заполните блок `S3_*`.
+
+### 6. systemd
+
+`/etc/systemd/system/toolhub.service`:
+
+```ini
+[Unit]
+Description=ToolHub
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=toolhub
+WorkingDirectory=/opt/toolhub/src/toolhub
+ExecStart=/usr/bin/node server/index.js
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+
+# песочница: приложению нужен только свой каталог и папка с файлами
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/toolhub
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now toolhub
+sudo systemctl status toolhub
+journalctl -u toolhub -f
+```
+
+### 7. nginx
+
+`/etc/nginx/sites-available/toolhub`:
+
+```nginx
+server {
+    listen 80;
+    server_name example.com www.example.com;
+
+    # запас над PRODUCT_FILE_MAX_MB, иначе nginx обрежет загрузку установщика
+    client_max_body_size 600m;
+
+    location / {
+        proxy_pass http://127.0.0.1:4000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # большие файлы: не буферизуем и даём время на медленный аплоад
+        proxy_request_buffering off;
+        proxy_buffering off;
+        proxy_read_timeout 600s;
+        proxy_send_timeout 600s;
+    }
+}
+```
+
+```bash
+sudo ln -s /etc/nginx/sites-available/toolhub /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+sudo apt install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d example.com -d www.example.com
+```
+
+Приложение доверяет одному прокси (`trust proxy = 1`), поэтому rate limit
+считает реальные IP из `X-Forwarded-For`. Если перед nginx стоит Cloudflare,
+страна в аналитике возьмётся из `CF-IPCountry` автоматически, для другого
+CDN пробросьте `X-Country-Code`.
+
+### 8. Первый вход
+
+Откройте `https://example.com/p-7f3a91`, войдите с сидовыми данными и сразу
+смените пароль в **Settings → Password**.
+
+### 9. Обновление
+
+```bash
+cd /opt/toolhub/src
+sudo -u toolhub git pull
+cd toolhub
+sudo -u toolhub npm ci
+sudo -u toolhub npm run db:migrate
+sudo -u toolhub VITE_ADMIN_PATH=/p-7f3a91 npm run build
+sudo systemctl restart toolhub
+```
+
+### 10. Резервные копии
+
+```bash
+# база
+sudo -u postgres pg_dump toolhub | gzip > /var/backups/toolhub-$(date +%F).sql.gz
+# файлы продуктов и картинки
+tar czf /var/backups/toolhub-files-$(date +%F).tar.gz /var/lib/toolhub
+```
+
+Поставьте это в cron: база и `/var/lib/toolhub` это всё состояние, каталог с
+кодом восстанавливается из git.
+
+### Проверка после деплоя
+
+```bash
+curl -s https://example.com/api/health     # {"status":"ok","database":"up"}
+curl -s https://example.com/robots.txt     # Disallow должен указывать на ваш ADMIN_PATH
+curl -sI https://example.com/sitemap.xml
+```
+
 ## Скрытая админ-панель
 
 Публичный сайт полностью анонимный: регистрации и входа для посетителей нет,
@@ -60,17 +253,15 @@ VITE_ADMIN_PATH=/p-7f3a91 npm run build
 Скрытый путь это не замена авторизации, а дополнительный слой: доступ всё
 равно проверяется на сервере при каждом запросе.
 
-## Роли
+## Администратор
 
-| Роль | Права |
-| --- | --- |
-| `super_admin` | всё, включая сотрудников, настройки и audit log |
-| `editor` | продукты, категории, страницы, медиа |
-| `moderator` | модерация отзывов, чтение контента |
-| `analyst` | только аналитика и чтение каталога |
+В системе ровно один вход: аккаунт администратора панели. Сотрудников, ролей и
+регистрации нет. Учётные данные создаются сидом из `SEED_ADMIN_EMAIL` и
+`SEED_ADMIN_PASSWORD`, дальше имя, email и пароль меняются в разделе
+**Settings → Administrator account**, без правки базы.
 
-Права проверяются на сервере на каждом запросе; меню в интерфейсе это лишь
-удобство, а не граница безопасности.
+Сервер проверяет сессию на каждом запросе к админским эндпоинтам, интерфейс
+ничего не решает сам по себе.
 
 ## API
 
@@ -79,10 +270,14 @@ GET    /api/health
 
 POST   /api/auth/login             POST /api/auth/logout
 GET    /api/auth/me                POST /api/auth/password
+PUT    /api/auth/profile
 
 GET    /api/products               GET  /api/products/suggest
 GET    /api/products/:idOrSlug     GET  /api/products/:id/related
-GET    /api/products/:id/download  (счётчик + событие + redirect)
+GET    /api/products/:id/download  (счётчик + событие + файл или redirect)
+PUT    /api/products/:id/file      (загрузка установщика)
+DELETE /api/products/:id/file
+GET    /api/products/file/limits
 GET    /api/products/export/csv
 POST   /api/products               PUT  /api/products/:id
 DELETE /api/products/:id           POST /api/products/bulk
@@ -97,9 +292,7 @@ PUT    /api/pages/:slug            DELETE /api/pages/:slug
 GET    /api/reviews                POST /api/reviews
 PUT    /api/reviews/:id            DELETE /api/reviews/:id
 
-GET    /api/users                  POST /api/users
-PUT    /api/users/:id              DELETE /api/users/:id
-GET    /api/users/audit/log
+GET    /api/audit
 
 GET    /api/analytics/overview     GET  /api/analytics/downloads
 GET    /api/analytics/countries    GET  /api/analytics/products
@@ -124,6 +317,32 @@ GET    /robots.txt                 GET  /sitemap.xml
 
 `customHtml` санитизируется перед выводом: скрипты, обработчики событий и
 `javascript:` ссылки вырезаются.
+
+## Файлы продуктов
+
+Установщики лежат на сервере в папке `PRODUCTS_DIR` (по умолчанию
+`server/products`) и **не отдаются статикой**. Каждое скачивание идёт через
+`GET /api/products/:id/download`, поэтому оно считается, попадает в аналитику,
+ограничено rate limit и блокируется в запрещённых регионах.
+
+Как это работает:
+
+1. в редакторе продукта, вкладка **Links**, кнопка «Upload file»;
+2. файл льётся потоком прямо на диск, в памяти целиком не оказывается, в
+   интерфейсе виден прогресс;
+3. на диске имя всегда UUID + расширение, оригинальное имя хранится отдельно и
+   отдаётся в `Content-Disposition`, поэтому имя файла от клиента не может
+   повлиять на путь;
+4. если файл загружен, кнопка Download отдаёт его с сервера с поддержкой
+   Range (докачка), если нет, посетителя редиректит на внешний `downloadUrl`;
+5. замена файла удаляет старый, удаление продукта удаляет его установщик.
+
+Разрешённые расширения: `exe, msi, msix, appx, zip, rar, 7z, tar, gz, tgz,
+dmg, pkg, apk, deb, rpm, appimage, jar, iso, bin, run`. Лимит размера задаётся
+`PRODUCT_FILE_MAX_MB` (по умолчанию 512).
+
+На боевом сервере держите папку вне каталога с кодом, чтобы деплой её не
+трогал, например `PRODUCTS_DIR=/var/lib/toolhub/products`.
 
 ## База данных
 
