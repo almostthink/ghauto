@@ -102,10 +102,15 @@ ADMIN_PATH=/p-7f3a91
 PRODUCTS_DIR=/var/lib/toolhub/products
 PRODUCT_FILE_MAX_MB=512
 STORAGE_DRIVER=local
+UPLOADS_DIR=/var/lib/toolhub/uploads
 
 SEED_ADMIN_EMAIL="you@example.com"
 SEED_ADMIN_PASSWORD="временный-пароль-смените-после-входа"
 ```
+
+`PRODUCTS_DIR` и `UPLOADS_DIR` должны лежать вне каталога с кодом: systemd-юнит
+ниже монтирует файловую систему только для чтения и разрешает запись лишь в
+`/var/lib/toolhub`.
 
 `COOKIE_SECURE=1` обязателен под HTTPS, иначе браузер не сохранит cookie
 сессии. В production сервер не стартует, если `JWT_SECRET` короче 32 символов.

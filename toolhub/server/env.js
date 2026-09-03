@@ -81,7 +81,12 @@ export const env = {
     secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || "",
     publicUrl: (process.env.S3_PUBLIC_URL || "").replace(/\/$/, ""),
     maxBytes: Number(process.env.UPLOAD_MAX_MB || 8) * 1024 * 1024,
-    localDir: path.join(dirname, "uploads")
+    // Where the "local" driver keeps images. On a server this belongs outside
+    // the code directory, so a deploy never touches it and the service can be
+    // sandboxed with a read-only filesystem.
+    localDir: process.env.UPLOADS_DIR
+      ? path.resolve(rootDir, process.env.UPLOADS_DIR)
+      : path.join(dirname, "uploads")
   },
   seed: {
     adminEmail: process.env.SEED_ADMIN_EMAIL || "admin@toolhub.local",
