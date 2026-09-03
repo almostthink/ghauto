@@ -10,5 +10,17 @@ export default defineConfig({
       "/uploads": { target: "http://localhost:4000", changeOrigin: true }
     }
   },
-  build: { outDir: "dist", sourcemap: false }
+  build: {
+    outDir: "dist",
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        // Keep the rarely-changing vendor code in its own long-lived chunk.
+        manualChunks: {
+          vendor: ["react", "react-dom", "react-router-dom"],
+          query: ["@tanstack/react-query"]
+        }
+      }
+    }
+  }
 });

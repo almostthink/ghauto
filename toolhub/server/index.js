@@ -46,14 +46,20 @@ app.use(
   })
 );
 
+// The SPA is served from this same origin in production, so a request whose
+// Origin matches the host it was sent to is always allowed. Everything else
+// must be listed in CORS_ORIGINS. A disallowed origin simply gets no CORS
+// headers, which the browser blocks, rather than a server error.
 app.use(
-  cors({
-    origin(origin, callback) {
-      // Same-origin and server-to-server requests carry no Origin header.
-      if (!origin || env.corsOrigins.includes(origin)) return callback(null, true);
-      callback(new Error("Origin not allowed by CORS"));
-    },
-    credentials: true
+  cors((req, callback) => {
+    const origin = req.headers.origin;
+    const sameOrigin = `${req.protocol}://${req.headers.host}`;
+    const allowed =
+      !origin ||
+      origin === sameOrigin ||
+      origin === env.publicSiteUrl ||
+      env.corsOrigins.includes(origin);
+    callback(null, { origin: allowed, credentials: true });
   })
 );
 

@@ -64,7 +64,8 @@ analyticsRouter.get("/overview", route(async (req, res) => {
     }),
     prisma.review.count({ where: { status: "pending" } }),
     prisma.review.count(),
-    prisma.category.count()
+    // Only top-level categories: this is the number visitors see in the nav.
+    prisma.category.count({ where: { parentId: null } })
   ]);
 
   res.json({
