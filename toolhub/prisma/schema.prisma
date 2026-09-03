@@ -1,0 +1,301 @@
+// ToolHub database schema.
+// The public site is fully anonymous: there are no visitor accounts.
+// `User` rows are staff accounts for the hidden admin panel only.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  super_admin
+  editor
+  moderator
+  analyst
+}
+
+enum ProductStatus {
+  draft
+  published
+  archived
+}
+
+enum ImageKind {
+  gallery
+  screenshot
+}
+
+enum ReviewStatus {
+  pending
+  approved
+  rejected
+}
+
+enum PageStatus {
+  draft
+  published
+}
+
+enum AvailabilityMode {
+  all
+  allow
+  block
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  role         Role      @default(editor)
+  active       Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  auditLogs AuditLog[]
+
+  @@index([role])
+}
+
+model Category {
+  id          String  @id @default(uuid())
+  slug        String  @unique
+  name        String
+  description String  @default("")
+  icon        String  @default("package")
+  accent      String  @default("#8b5cf6")
+  position    Int     @default(0)
+  visible     Boolean @default(true)
+
+  // Self relation: a category with a parent is a subcategory.
+  parentId String?
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children Category[] @relation("CategoryTree")
+
+  seoTitle       String @default("")
+  seoDescription String @default("")
+
+  products    Product[] @relation("ProductCategory")
+  subProducts Product[] @relation("ProductSubcategory")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([parentId])
+}
+
+model Tag {
+  id   String @id @default(uuid())
+  slug String @unique
+  name String
+
+  products ProductTag[]
+}
+
+model Product {
+  id               String @id @default(uuid())
+  slug             String @unique
+  name             String
+  shortDescription String @default("")
+  longDescription  String @default("")
+
+  categoryId    String
+  category      Category  @relation("ProductCategory", fields: [categoryId], references: [id])
+  subcategoryId String?
+  subcategory   Category? @relation("ProductSubcategory", fields: [subcategoryId], references: [id], onDelete: SetNull)
+
+  rating      Float @default(0)
+  reviewCount Int   @default(0)
+  downloads   Int   @default(0)
+  views       Int   @default(0)
+
+  version  String @default("1.0.0")
+  fileSize String @default("")
+  license  String @default("Free")
+  price    String @default("Free")
+
+  downloadUrl String @default("")
+  officialUrl String @default("")
+  thumbnail   String @default("")
+
+  featured Boolean @default(false)
+  popular  Boolean @default(false)
+  verified Boolean @default(false)
+
+  status ProductStatus @default(draft)
+
+  availabilityMode    AvailabilityMode @default(all)
+  countryAvailability String[]         @default([])
+
+  // Free-form lists kept inline: they are edited as a whole and never queried on their own.
+  features     String[] @default([])
+  requirements String[] @default([])
+  // [{ version, date, notes }]
+  changelog    Json     @default("[]")
+
+  seoTitle       String   @default("")
+  seoDescription String   @default("")
+  seoKeywords    String[] @default([])
+
+  images         ProductImage[]
+  tags           ProductTag[]
+  reviews        Review[]
+  downloadEvents DownloadEvent[]
+  viewEvents     ViewEvent[]
+
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([categoryId])
+  @@index([status])
+  @@index([featured])
+  @@index([popular])
+  @@index([downloads])
+}
+
+model ProductImage {
+  id        String    @id @default(uuid())
+  productId String
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String    @default("")
+  kind      ImageKind @default(gallery)
+  position  Int       @default(0)
+  createdAt DateTime  @default(now())
+
+  @@index([productId, kind, position])
+}
+
+model ProductTag {
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  tagId     String
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([productId, tagId])
+  @@index([tagId])
+}
+
+model Page {
+  id     String     @id @default(uuid())
+  slug   String     @unique
+  title  String
+  status PageStatus @default(published)
+
+  seoTitle       String   @default("")
+  seoDescription String   @default("")
+  seoKeywords    String[] @default([])
+
+  blocks PageBlock[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PageBlock {
+  id       String  @id @default(uuid())
+  pageId   String
+  page     Page    @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  type     String
+  position Int     @default(0)
+  visible  Boolean @default(true)
+  data     Json    @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([pageId, position])
+}
+
+model Review {
+  id         String       @id @default(uuid())
+  productId  String
+  product    Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  authorName String
+  rating     Int
+  title      String       @default("")
+  body       String
+  status     ReviewStatus @default(pending)
+  country    String       @default("")
+  ipHash     String       @default("")
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([productId, status])
+  @@index([status, createdAt])
+}
+
+model Country {
+  code      String @id
+  name      String
+  region    String @default("")
+  downloads Int    @default(0)
+  views     Int    @default(0)
+}
+
+model DownloadEvent {
+  id          String   @id @default(uuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  country     String   @default("")
+  countryCode String   @default("")
+  region      String   @default("")
+  city        String   @default("")
+  referrer    String   @default("")
+  device      String   @default("desktop")
+  userAgent   String   @default("")
+  ipHash      String   @default("")
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([productId, createdAt])
+  @@index([countryCode])
+}
+
+model ViewEvent {
+  id          String   @id @default(uuid())
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  path        String   @default("")
+  country     String   @default("")
+  countryCode String   @default("")
+  region      String   @default("")
+  city        String   @default("")
+  referrer    String   @default("")
+  device      String   @default("desktop")
+  userAgent   String   @default("")
+  ipHash      String   @default("")
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([productId, createdAt])
+  @@index([countryCode])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  actorEmail String   @default("")
+  action     String
+  entity     String
+  entityId   String   @default("")
+  meta       Json     @default("{}")
+  ip         String   @default("")
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([entity, entityId])
+}
+
+model Setting {
+  key       String   @id
+  value     Json     @default("{}")
+  updatedAt DateTime @updatedAt
+}

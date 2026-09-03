@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: toolhub-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: toolhub
+      POSTGRES_PASSWORD: toolhub
+      POSTGRES_DB: toolhub
+    ports:
+      - "5432:5432"
+    volumes:
+      - toolhub-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U toolhub -d toolhub"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  toolhub-db-data:
