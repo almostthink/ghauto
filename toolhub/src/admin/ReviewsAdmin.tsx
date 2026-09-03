@@ -5,7 +5,6 @@ import { formatDate } from "../lib/format";
 import { useDeleteReview, useReviews, useSaveReview } from "../lib/queries";
 import type { ReviewStatus } from "../lib/types";
 import { AdminPanel, PageHeading } from "./components";
-import { can, useAuth } from "./auth";
 
 const FILTERS: { key: ReviewStatus | "all"; label: string }[] = [
   { key: "pending", label: "Pending" },
@@ -15,8 +14,6 @@ const FILTERS: { key: ReviewStatus | "all"; label: string }[] = [
 ];
 
 export function ReviewsAdmin() {
-  const { user } = useAuth();
-  const canModerate = can(user?.role, "reviews.write");
   const toast = useToast();
 
   const [filter, setFilter] = useState<ReviewStatus | "all">("pending");
@@ -85,23 +82,19 @@ export function ReviewsAdmin() {
                   <td><span className={`status-pill status-${review.status}`}>{review.status}</span></td>
                   <td>{formatDate(review.createdAt)}</td>
                   <td className="row-actions">
-                    {canModerate ? (
-                      <>
-                        {review.status !== "approved" ? (
-                          <button type="button" className="edit-btn" onClick={() => setStatus(review.id, "approved")}>
-                            <Check size={13} /> Approve
-                          </button>
-                        ) : null}
-                        {review.status !== "rejected" ? (
-                          <button type="button" className="icon-btn" onClick={() => setStatus(review.id, "rejected")} aria-label="Reject">
-                            <X size={13} />
-                          </button>
-                        ) : null}
-                        <button type="button" className="icon-btn danger" onClick={() => setConfirm(review.id)} aria-label="Delete review">
-                          <Trash2 size={13} />
-                        </button>
-                      </>
-                    ) : <span className="muted-note">Read only</span>}
+                    {review.status !== "approved" ? (
+                      <button type="button" className="edit-btn" onClick={() => setStatus(review.id, "approved")}>
+                        <Check size={13} /> Approve
+                      </button>
+                    ) : null}
+                    {review.status !== "rejected" ? (
+                      <button type="button" className="icon-btn" onClick={() => setStatus(review.id, "rejected")} aria-label="Reject">
+                        <X size={13} />
+                      </button>
+                    ) : null}
+                    <button type="button" className="icon-btn danger" onClick={() => setConfirm(review.id)} aria-label="Delete review">
+                      <Trash2 size={13} />
+                    </button>
                   </td>
                 </tr>
               ))}

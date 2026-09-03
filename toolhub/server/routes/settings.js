@@ -2,7 +2,7 @@ import express from "express";
 import { prisma } from "../db.js";
 import { audit } from "../lib/audit.js";
 import { parseBody, route } from "../lib/http.js";
-import { requirePermission } from "../middleware/auth.js";
+import { requireAuth } from "../middleware/auth.js";
 import { settingsSchema } from "../schemas/index.js";
 
 export const settingsRouter = express.Router();
@@ -60,7 +60,7 @@ settingsRouter.get("/", route(async (req, res) => {
   res.json(await readSettings(keys));
 }));
 
-settingsRouter.put("/:key", requirePermission("content.write"), route(async (req, res) => {
+settingsRouter.put("/:key", requireAuth, route(async (req, res) => {
   const { value } = parseBody(settingsSchema, req.body);
   const key = req.params.key.slice(0, 40);
   const saved = await prisma.setting.upsert({

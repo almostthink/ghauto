@@ -129,20 +129,11 @@ export const reviewPatchSchema = z.object({
   rating: z.coerce.number().int().min(1).max(5).optional()
 });
 
-export const userSchema = z.object({
+// The panel has a single administrator, who can rename the account and change
+// its email from Settings. There is no account creation flow.
+export const profileSchema = z.object({
   email: z.string().trim().email().max(200),
-  name: trimmed(120).min(2),
-  password: z.string().min(10).max(200),
-  role: z.enum(["super_admin", "editor", "moderator", "analyst"]).default("editor"),
-  active: z.boolean().default(true)
-});
-
-export const userPatchSchema = z.object({
-  email: z.string().trim().email().max(200).optional(),
-  name: trimmed(120).min(2).optional(),
-  password: z.string().min(10).max(200).optional(),
-  role: z.enum(["super_admin", "editor", "moderator", "analyst"]).optional(),
-  active: z.boolean().optional()
+  name: trimmed(120).min(2)
 });
 
 export const productQuerySchema = z.object({

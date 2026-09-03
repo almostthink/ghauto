@@ -1,10 +1,14 @@
 import express from "express";
 import { prisma } from "../db.js";
+import { env } from "../env.js";
 import { audit } from "../lib/audit.js";
 import { requestContext } from "../lib/analytics.js";
 import { HttpError, notFound, parseBody, parseQuery, route } from "../lib/http.js";
+import {
+  deleteStoredFile, humanSize, resolveStoredPath, safeDownloadName, saveUploadStream, statStoredFile
+} from "../lib/productFiles.js";
 import { slugify, uniqueSlug } from "../lib/text.js";
-import { requirePermission } from "../middleware/auth.js";
+import { requireAuth } from "../middleware/auth.js";
 import { downloadLimiter } from "../middleware/limits.js";
 import { bulkProductSchema, productPatchSchema, productQuerySchema, productSchema } from "../schemas/index.js";
 
@@ -37,6 +41,11 @@ export function serializeProduct(product) {
     fileSize: product.fileSize,
     license: product.license,
     price: product.price,
+    // The storage key stays server-side; the client only needs to know that a
+    // file exists and what it weighs.
+    hasFile: Boolean(product.fileKey),
+    fileName: product.fileName,
+    fileBytes: product.fileBytes,
     downloadUrl: product.downloadUrl,
     officialUrl: product.officialUrl,
     thumbnail: product.thumbnail,
@@ -186,26 +195,104 @@ productsRouter.get("/:id/download", downloadLimiter, route(async (req, res) => {
     where: { OR: [{ slug: req.params.id }, { id: req.params.id }] }
   });
   if (!product || product.status !== "published") throw notFound("Product not found");
-  if (!product.downloadUrl) throw new HttpError(409, "This product has no download link configured");
+  if (!product.fileKey && !product.downloadUrl) {
+    throw new HttpError(409, "This product has no file or download link configured");
+  }
 
   const context = requestContext(req);
   if (!isAvailableIn(product, context.countryCode)) {
     throw new HttpError(451, "This product is not available in your region");
   }
 
-  await prisma.$transaction([
-    prisma.product.update({ where: { id: product.id }, data: { downloads: { increment: 1 } } }),
-    prisma.downloadEvent.create({ data: { productId: product.id, ...context } }),
-    ...(context.countryCode
-      ? [prisma.country.updateMany({ where: { code: context.countryCode }, data: { downloads: { increment: 1 } } })]
-      : [])
-  ]);
+  // A file stored on this server is served directly; otherwise the visitor is
+  // redirected to the vendor. Either way the download is counted first.
+  const stored = product.fileKey ? await statStoredFile(product.fileKey) : null;
+  if (product.fileKey && !stored) {
+    throw new HttpError(410, "The file for this product is missing on the server");
+  }
+
+  // A resumed or chunked transfer is the same download continuing: only the
+  // request that starts at the first byte is counted.
+  const range = String(req.headers.range || "");
+  const isContinuation = Boolean(range) && !/^bytes=0-/.test(range);
+
+  if (!isContinuation) {
+    await prisma.$transaction([
+      prisma.product.update({ where: { id: product.id }, data: { downloads: { increment: 1 } } }),
+      prisma.downloadEvent.create({ data: { productId: product.id, ...context } }),
+      ...(context.countryCode
+        ? [prisma.country.updateMany({ where: { code: context.countryCode }, data: { downloads: { increment: 1 } } })]
+        : [])
+    ]);
+  }
+
+  if (stored) {
+    const filename = safeDownloadName(product.fileName || `${product.slug}.bin`);
+    if (String(req.query.format) === "json") {
+      return res.json({ url: `/api/products/${product.id}/download`, filename, bytes: stored.size });
+    }
+    res.setHeader("Content-Type", "application/octet-stream");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    // res.download sets Content-Disposition and handles Range requests, so a
+    // large installer can be resumed.
+    return res.download(resolveStoredPath(product.fileKey), filename);
+  }
 
   if (String(req.query.format) === "json") {
     return res.json({ url: product.downloadUrl });
   }
   res.redirect(302, product.downloadUrl);
 }));
+
+// --- Installer upload -----------------------------------------------------
+// The body is the raw file: express.json() is not mounted on this route, and
+// the stream is written straight to PRODUCTS_DIR.
+productsRouter.put("/:id/file", requireAuth, route(async (req, res) => {
+  const product = await prisma.product.findUnique({ where: { id: req.params.id } });
+  if (!product) throw notFound("Product not found");
+
+  const filename = String(req.query.filename || req.headers["x-file-name"] || "");
+  if (!filename) throw new HttpError(400, "Pass the original file name as ?filename=");
+
+  const { key, bytes } = await saveUploadStream(req, filename);
+  const previousKey = product.fileKey;
+
+  const updated = await prisma.product.update({
+    where: { id: product.id },
+    data: {
+      fileKey: key,
+      fileName: safeDownloadName(filename),
+      fileBytes: bytes,
+      fileSize: humanSize(bytes)
+    },
+    include: productInclude
+  });
+
+  // Only drop the old file once the new one is recorded.
+  if (previousKey) await deleteStoredFile(previousKey).catch(() => undefined);
+  await audit(req, "product.file_upload", "product", product.id, { fileName: updated.fileName, bytes });
+  res.status(201).json(serializeProduct(updated));
+}));
+
+productsRouter.delete("/:id/file", requireAuth, route(async (req, res) => {
+  const product = await prisma.product.findUnique({ where: { id: req.params.id } });
+  if (!product) throw notFound("Product not found");
+  if (!product.fileKey) throw notFound("This product has no stored file");
+
+  await deleteStoredFile(product.fileKey);
+  const updated = await prisma.product.update({
+    where: { id: product.id },
+    data: { fileKey: "", fileName: "", fileBytes: 0 },
+    include: productInclude
+  });
+  await audit(req, "product.file_delete", "product", product.id, {});
+  res.json(serializeProduct(updated));
+}));
+
+// Limits the admin panel shows next to the upload control.
+productsRouter.get("/file/limits", requireAuth, (_req, res) => {
+  res.json({ maxBytes: env.products.maxBytes, maxMb: Math.round(env.products.maxBytes / 1048576) });
+});
 
 export function isAvailableIn(product, countryCode) {
   if (product.availabilityMode === "all" || !countryCode) return true;
@@ -243,7 +330,7 @@ async function syncRelations(productId, { tags, gallery, screenshots }) {
   }
 }
 
-productsRouter.post("/", requirePermission("content.write"), route(async (req, res) => {
+productsRouter.post("/", requireAuth, route(async (req, res) => {
   const input = parseBody(productSchema, req.body);
   const slug = await uniqueSlug(prisma.product, slugify(input.slug || input.name, "product"));
   const { tags, gallery, screenshots, ...fields } = input;
@@ -262,7 +349,7 @@ productsRouter.post("/", requirePermission("content.write"), route(async (req, r
   res.status(201).json(serializeProduct(created));
 }));
 
-productsRouter.put("/:id", requirePermission("content.write"), route(async (req, res) => {
+productsRouter.put("/:id", requireAuth, route(async (req, res) => {
   const existing = await prisma.product.findUnique({ where: { id: req.params.id } });
   if (!existing) throw notFound("Product not found");
 
@@ -284,15 +371,16 @@ productsRouter.put("/:id", requirePermission("content.write"), route(async (req,
   res.json(serializeProduct(updated));
 }));
 
-productsRouter.delete("/:id", requirePermission("content.write"), route(async (req, res) => {
+productsRouter.delete("/:id", requireAuth, route(async (req, res) => {
   const existing = await prisma.product.findUnique({ where: { id: req.params.id } });
   if (!existing) throw notFound("Product not found");
   await prisma.product.delete({ where: { id: existing.id } });
+  if (existing.fileKey) await deleteStoredFile(existing.fileKey).catch(() => undefined);
   await audit(req, "product.delete", "product", existing.id, { name: existing.name });
   res.status(204).end();
 }));
 
-productsRouter.post("/bulk", requirePermission("content.write"), route(async (req, res) => {
+productsRouter.post("/bulk", requireAuth, route(async (req, res) => {
   const { ids, action } = parseBody(bulkProductSchema, req.body);
   const updates = {
     publish: { status: "published", publishedAt: new Date() },
@@ -303,7 +391,12 @@ productsRouter.post("/bulk", requirePermission("content.write"), route(async (re
   };
 
   if (action === "delete") {
+    const doomed = await prisma.product.findMany({
+      where: { id: { in: ids }, NOT: { fileKey: "" } },
+      select: { fileKey: true }
+    });
     const result = await prisma.product.deleteMany({ where: { id: { in: ids } } });
+    for (const row of doomed) await deleteStoredFile(row.fileKey).catch(() => undefined);
     await audit(req, "product.bulk_delete", "product", "", { count: result.count });
     return res.json({ affected: result.count });
   }
@@ -314,7 +407,7 @@ productsRouter.post("/bulk", requirePermission("content.write"), route(async (re
 }));
 
 // CSV export of the current admin filter selection.
-productsRouter.get("/export/csv", requirePermission("content.read"), route(async (req, res) => {
+productsRouter.get("/export/csv", requireAuth, route(async (req, res) => {
   const query = parseQuery(productQuerySchema, { ...req.query, perPage: 100 });
   const rows = await prisma.product.findMany({
     where: buildWhere(query, { adminView: true }),

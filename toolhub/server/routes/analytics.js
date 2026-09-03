@@ -4,12 +4,12 @@ import { prisma } from "../db.js";
 import { buildSeries, granularityFor, resolveRange } from "../lib/analytics.js";
 import { COUNTRY_REGIONS } from "../lib/countries.js";
 import { badRequest, parseQuery, route } from "../lib/http.js";
-import { requirePermission } from "../middleware/auth.js";
+import { requireAuth } from "../middleware/auth.js";
 import { analyticsQuerySchema } from "../schemas/index.js";
 
 export const analyticsRouter = express.Router();
 
-analyticsRouter.use(requirePermission("analytics.read"));
+analyticsRouter.use(requireAuth);
 
 function range(req) {
   const query = parseQuery(analyticsQuerySchema, req.query);

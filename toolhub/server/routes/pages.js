@@ -3,7 +3,7 @@ import { prisma } from "../db.js";
 import { audit } from "../lib/audit.js";
 import { notFound, parseBody, route } from "../lib/http.js";
 import { slugify } from "../lib/text.js";
-import { requirePermission } from "../middleware/auth.js";
+import { requireAuth } from "../middleware/auth.js";
 import { pageSchema } from "../schemas/index.js";
 
 export const pagesRouter = express.Router();
@@ -26,7 +26,7 @@ const serialize = (page) => ({
   }))
 });
 
-pagesRouter.get("/", requirePermission("content.read"), route(async (_req, res) => {
+pagesRouter.get("/", requireAuth, route(async (_req, res) => {
   const rows = await prisma.page.findMany({
     orderBy: { slug: "asc" },
     include: { blocks: { orderBy: { position: "asc" } } }
@@ -49,7 +49,7 @@ pagesRouter.get("/:slug", route(async (req, res) => {
 
 // Full replace: the page builder always sends the complete block list, which
 // keeps reorder / duplicate / delete a single atomic write.
-pagesRouter.put("/:slug", requirePermission("content.write"), route(async (req, res) => {
+pagesRouter.put("/:slug", requireAuth, route(async (req, res) => {
   const slug = slugify(req.params.slug, "page");
   const input = parseBody(pageSchema, req.body);
   const { blocks, ...fields } = input;
@@ -82,7 +82,7 @@ pagesRouter.put("/:slug", requirePermission("content.write"), route(async (req, 
   res.json(serialize(page));
 }));
 
-pagesRouter.delete("/:slug", requirePermission("content.write"), route(async (req, res) => {
+pagesRouter.delete("/:slug", requireAuth, route(async (req, res) => {
   const page = await prisma.page.findUnique({ where: { slug: req.params.slug } });
   if (!page) throw notFound("Page not found");
   await prisma.page.delete({ where: { id: page.id } });

@@ -7,7 +7,6 @@ import { formatCompact, formatDate } from "../lib/format";
 import { queryString } from "../lib/api";
 import { useBulkProducts, useCategories, useDeleteProduct, useProducts } from "../lib/queries";
 import { AdminPanel, PageHeading } from "./components";
-import { can, useAuth } from "./auth";
 
 const STATUS_LABELS: Record<string, string> = {
   published: "Published",
@@ -16,9 +15,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export function ProductsList() {
-  const { user } = useAuth();
   const toast = useToast();
-  const writable = can(user?.role, "content.write");
 
   const [term, setTerm] = useState("");
   const [category, setCategory] = useState("");
@@ -76,9 +73,7 @@ export function ProductsList() {
         <a className="btn ghost" href={`/api/products/export/csv${queryString({ ...filters, page: undefined })}`}>
           <FileDown size={15} /> Export CSV
         </a>
-        {writable ? (
-          <Link className="btn primary" to={adminUrl("/products/new")}><Plus size={16} /> Add new tool</Link>
-        ) : null}
+        <Link className="btn primary" to={adminUrl("/products/new")}><Plus size={16} /> Add new tool</Link>
       </PageHeading>
 
       <AdminPanel className="table-panel">
@@ -112,7 +107,7 @@ export function ProductsList() {
           </select>
         </div>
 
-        {selected.length && writable ? (
+        {selected.length ? (
           <div className="bulk-bar">
             <b>{selected.length} selected</b>
             <button type="button" className="btn ghost small" onClick={() => runBulk("publish")}>Publish</button>
@@ -133,7 +128,7 @@ export function ProductsList() {
           <EmptyState
             title="No products match"
             text="Adjust the filters, or create the first entry for this category."
-            action={writable ? <Link className="btn primary" to={adminUrl("/products/new")}><Plus size={15} /> Add product</Link> : undefined}
+            action={<Link className="btn primary" to={adminUrl("/products/new")}><Plus size={15} /> Add product</Link>}
           />
         ) : null}
 
@@ -141,16 +136,14 @@ export function ProductsList() {
           <table>
             <thead>
               <tr>
-                {writable ? (
-                  <th className="check-col">
+                <th className="check-col">
                     <input
                       type="checkbox"
                       checked={allSelected}
                       onChange={(event) => setSelected(event.target.checked ? data.items.map((item) => item.id) : [])}
-                      aria-label="Select all"
-                    />
-                  </th>
-                ) : null}
+                    aria-label="Select all"
+                  />
+                </th>
                 <th>Product</th>
                 <th>Category</th>
                 <th>Status</th>
@@ -163,8 +156,7 @@ export function ProductsList() {
             <tbody>
               {data.items.map((product) => (
                 <tr key={product.id} className={selected.includes(product.id) ? "row-selected" : ""}>
-                  {writable ? (
-                    <td className="check-col">
+                  <td className="check-col">
                       <input
                         type="checkbox"
                         checked={selected.includes(product.id)}
@@ -173,10 +165,9 @@ export function ProductsList() {
                             event.target.checked ? [...current, product.id] : current.filter((id) => id !== product.id)
                           )
                         }
-                        aria-label={`Select ${product.name}`}
-                      />
-                    </td>
-                  ) : null}
+                      aria-label={`Select ${product.name}`}
+                    />
+                  </td>
                   <td>
                     <div className="table-product">
                       {product.thumbnail ? <img src={product.thumbnail} alt="" /> : <span className="image-fallback small" />}
@@ -193,11 +184,9 @@ export function ProductsList() {
                   <td>{formatDate(product.updatedAt)}</td>
                   <td className="row-actions">
                     <Link className="edit-btn" to={adminUrl(`/products/${product.id}/edit`)}><Edit3 size={14} /> Edit</Link>
-                    {writable ? (
-                      <button type="button" className="icon-btn danger" onClick={() => setConfirm({ ids: [product.id], single: product.id })} aria-label={`Delete ${product.name}`}>
-                        <Trash2 size={14} />
-                      </button>
-                    ) : null}
+                    <button type="button" className="icon-btn danger" onClick={() => setConfirm({ ids: [product.id], single: product.id })} aria-label={`Delete ${product.name}`}>
+                      <Trash2 size={14} />
+                    </button>
                   </td>
                 </tr>
               ))}

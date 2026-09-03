@@ -3,7 +3,7 @@ import { prisma } from "../db.js";
 import { audit } from "../lib/audit.js";
 import { requestContext } from "../lib/analytics.js";
 import { notFound, parseBody, route } from "../lib/http.js";
-import { requirePermission } from "../middleware/auth.js";
+import { requireAuth } from "../middleware/auth.js";
 import { reviewLimiter } from "../middleware/limits.js";
 import { reviewPatchSchema, reviewSchema } from "../schemas/index.js";
 
@@ -76,7 +76,7 @@ reviewsRouter.post("/", reviewLimiter, route(async (req, res) => {
   res.status(201).json({ id: review.id, status: review.status });
 }));
 
-reviewsRouter.put("/:id", requirePermission("reviews.write"), route(async (req, res) => {
+reviewsRouter.put("/:id", requireAuth, route(async (req, res) => {
   const existing = await prisma.review.findUnique({ where: { id: req.params.id } });
   if (!existing) throw notFound("Review not found");
   const input = parseBody(reviewPatchSchema, req.body);
@@ -86,7 +86,7 @@ reviewsRouter.put("/:id", requirePermission("reviews.write"), route(async (req, 
   res.json(serialize(review));
 }));
 
-reviewsRouter.delete("/:id", requirePermission("reviews.write"), route(async (req, res) => {
+reviewsRouter.delete("/:id", requireAuth, route(async (req, res) => {
   const existing = await prisma.review.findUnique({ where: { id: req.params.id } });
   if (!existing) throw notFound("Review not found");
   await prisma.review.delete({ where: { id: existing.id } });

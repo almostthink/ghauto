@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { ArrowLeft, Check, Eye, Loader2, Plus, Save, Trash2 } from "lucide-react";
+import {
+  ArrowLeft, Check, Eye, FileUp, HardDrive, Loader2, Plus, Save, Trash2
+} from "lucide-react";
 import { ErrorState, Skeleton, useToast } from "../components/ui";
 import { adminUrl } from "../lib/config";
-import { formatNumber, formatRelative } from "../lib/format";
-import { useCategories, useProduct, useSaveProduct } from "../lib/queries";
+import { formatBytes, formatNumber, formatRelative } from "../lib/format";
+import {
+  useCategories, useDeleteProductFile, useFileLimits, useProduct, useSaveProduct, useUploadProductFile
+} from "../lib/queries";
 import type { ChangelogEntry, Product, ProductImage } from "../lib/types";
 import { AdminPanel, ImageField, PageHeading } from "./components";
 
@@ -352,10 +356,18 @@ export function ProductEditor() {
       ) : null}
 
       {tab === "Links" ? (
+        <>
+        {isNew ? (
+          <AdminPanel title="Installer file" subtitle="Available after the product is saved">
+            <p className="chart-empty">Save the product first, then upload its file here.</p>
+          </AdminPanel>
+        ) : (
+          <ProductFilePanel product={product} />
+        )}
         <AdminPanel title="Links and availability" subtitle="Where the download button goes">
           <div className="form-grid">
             <label className="wide">
-              Download URL
+              Download URL (used only when no file is uploaded)
               <input {...register("downloadUrl")} placeholder="https://vendor.example/download" />
             </label>
             <label className="wide">
@@ -376,10 +388,12 @@ export function ProductEditor() {
             </label>
           </div>
           <p className="form-note">
-            The download endpoint counts the download, records the analytics event and then redirects to this URL. Requests from
-            a blocked region are refused before the redirect.
+            The download endpoint counts the download and records the analytics event first. If the product has a file on this
+            server it is streamed from there, otherwise the visitor is redirected to this URL. Requests from a blocked region
+            are refused before either happens.
           </p>
         </AdminPanel>
+        </>
       ) : null}
 
       {tab === "Changelog" ? (
@@ -431,6 +445,102 @@ export function ProductEditor() {
         </button>
       </div>
     </form>
+  );
+}
+
+// Installer stored on the server, in PRODUCTS_DIR. Uploads stream straight to
+// disk, so a large file never has to fit in memory on either side.
+function ProductFilePanel({ product }: { product: Product | undefined }) {
+  const upload = useUploadProductFile();
+  const remove = useDeleteProductFile();
+  const limits = useFileLimits();
+  const toast = useToast();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [percent, setPercent] = useState(0);
+
+  if (!product) return null;
+
+  const pick = async (file: File | undefined) => {
+    if (!file) return;
+    if (limits.data && file.size > limits.data.maxBytes) {
+      toast(`That file is ${formatBytes(file.size)}. The limit is ${limits.data.maxMb} MB.`, "error");
+      return;
+    }
+    setPercent(0);
+    try {
+      await upload.mutateAsync({ id: product.id, file, onProgress: setPercent });
+      toast("File uploaded");
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Upload failed", "error");
+    } finally {
+      setPercent(0);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  };
+
+  return (
+    <AdminPanel
+      title="Installer file"
+      subtitle={`Stored on this server${limits.data ? ` · up to ${limits.data.maxMb} MB` : ""}`}
+      action={
+        <button type="button" className="btn ghost small" onClick={() => inputRef.current?.click()} disabled={upload.isPending}>
+          {upload.isPending ? <Loader2 size={13} className="spin" /> : <FileUp size={13} />}
+          {product.hasFile ? " Replace file" : " Upload file"}
+        </button>
+      }
+    >
+      {product.hasFile ? (
+        <div className="file-row">
+          <span className="file-icon"><HardDrive size={16} /></span>
+          <div>
+            <b>{product.fileName}</b>
+            <small>{formatBytes(product.fileBytes)} · served by the download button</small>
+          </div>
+          <a className="btn ghost small" href={`/api/products/${product.id}/download`} target="_blank" rel="noopener noreferrer">
+            Test download
+          </a>
+          <button
+            type="button"
+            className="icon-btn danger"
+            aria-label="Delete file"
+            disabled={remove.isPending}
+            onClick={async () => {
+              try {
+                await remove.mutateAsync(product.id);
+                toast("File removed");
+              } catch (error) {
+                toast(error instanceof Error ? error.message : "Could not remove the file", "error");
+              }
+            }}
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+      ) : (
+        <p className="chart-empty">
+          No file uploaded. The download button will use the external URL below.
+        </p>
+      )}
+
+      {upload.isPending ? (
+        <div className="upload-progress">
+          <div className="progress"><i style={{ width: `${percent}%` }} /></div>
+          <small>{percent}% uploaded</small>
+        </div>
+      ) : null}
+
+      <input
+        ref={inputRef}
+        type="file"
+        hidden
+        accept=".exe,.msi,.msix,.appx,.zip,.rar,.7z,.tar,.gz,.tgz,.dmg,.pkg,.apk,.deb,.rpm,.appimage,.jar,.iso,.bin,.run"
+        onChange={(event) => pick(event.target.files?.[0])}
+      />
+      <p className="form-note">
+        Files are never served from a public folder: every download goes through the counted endpoint, so it is rate limited,
+        recorded in analytics and refused in blocked regions.
+      </p>
+    </AdminPanel>
   );
 }
 

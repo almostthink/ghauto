@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  ArrowUpRight, Clock, Download, Eye, Grid2X2, Package, Plus, Settings, Star, Users
+  ArrowUpRight, Clock, Download, Eye, Grid2X2, Package, Plus, Settings, Star
 } from "lucide-react";
 import { ErrorState, Skeleton, StarRating } from "../components/ui";
 import { formatCompact, formatNumber, formatRelative } from "../lib/format";
@@ -10,7 +10,7 @@ import {
   useAuditLog, useCountryStats, useDownloadSeries, useOverview, useReviews, useTopProducts
 } from "../lib/queries";
 import { AdminPanel, AreaChart, DateRangePicker, PageHeading, type RangeState } from "./components";
-import { can, useAuth } from "./auth";
+import { useAuth } from "./auth";
 
 function Kpi({ label, value, hint, icon: Icon, to }: {
   label: string;
@@ -141,12 +141,10 @@ export function Dashboard() {
 
         <AdminPanel title="Quick actions" subtitle="Common management tasks">
           <div className="quick-actions">
-            {can(user?.role, "content.write") ? (
-              <Link to={adminUrl("/products/new")} className="quick-action">
-                <span><Plus /></span>
-                <div><b>Add new tool</b><small>Create a catalog entry</small></div>
-              </Link>
-            ) : null}
+            <Link to={adminUrl("/products/new")} className="quick-action">
+              <span><Plus /></span>
+              <div><b>Add new tool</b><small>Create a catalog entry</small></div>
+            </Link>
             <Link to={adminUrl("/categories")} className="quick-action">
               <span><Grid2X2 /></span>
               <div><b>Manage categories</b><small>Organize the catalog</small></div>
@@ -155,18 +153,10 @@ export function Dashboard() {
               <span><Star /></span>
               <div><b>Moderate reviews</b><small>{data?.pendingReviews ?? 0} waiting</small></div>
             </Link>
-            {can(user?.role, "*") ? (
-              <Link to={adminUrl("/users")} className="quick-action">
-                <span><Users /></span>
-                <div><b>Staff accounts</b><small>Roles and access</small></div>
-              </Link>
-            ) : null}
-            {can(user?.role, "content.write") ? (
-              <Link to={adminUrl("/settings")} className="quick-action">
-                <span><Settings /></span>
-                <div><b>Site settings</b><small>Branding, footer, SEO</small></div>
-              </Link>
-            ) : null}
+            <Link to={adminUrl("/settings")} className="quick-action">
+              <span><Settings /></span>
+              <div><b>Site settings</b><small>Branding, footer, SEO</small></div>
+            </Link>
           </div>
         </AdminPanel>
       </div>
@@ -183,7 +173,6 @@ export function Dashboard() {
             </div>
           ))}
           {audit.data && audit.data.items.length === 0 ? <p className="chart-empty">No admin activity recorded yet.</p> : null}
-          {audit.error ? <p className="chart-empty">Only super admins can read the audit log.</p> : null}
         </AdminPanel>
 
         <AdminPanel title="Catalog summary" subtitle="Platform health" className="system-info">

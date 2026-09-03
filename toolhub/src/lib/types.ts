@@ -1,4 +1,3 @@
-export type Role = "super_admin" | "editor" | "moderator" | "analyst";
 export type ProductStatus = "draft" | "published" | "archived";
 export type ReviewStatus = "pending" | "approved" | "rejected";
 export type AvailabilityMode = "all" | "allow" | "block";
@@ -55,6 +54,9 @@ export interface Product {
   fileSize: string;
   license: string;
   price: string;
+  hasFile: boolean;
+  fileName: string;
+  fileBytes: number;
   downloadUrl: string;
   officialUrl: string;
   thumbnail: string;
@@ -131,12 +133,11 @@ export interface Review {
   createdAt: string;
 }
 
-export interface StaffUser {
+// The single administrator of the hidden panel. Visitors have no accounts.
+export interface AdminUser {
   id: string;
   email: string;
   name: string;
-  role: Role;
-  active: boolean;
   lastLoginAt: string | null;
   createdAt: string;
 }

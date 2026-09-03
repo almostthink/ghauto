@@ -6,13 +6,10 @@ import { api } from "../lib/api";
 import { useCategories, useDeleteCategory, useInvalidate, useSaveCategory } from "../lib/queries";
 import type { Category } from "../lib/types";
 import { AdminPanel, PageHeading } from "./components";
-import { can, useAuth } from "./auth";
 
 type Draft = Partial<Category> & { name: string };
 
 export function CategoriesAdmin() {
-  const { user } = useAuth();
-  const writable = can(user?.role, "content.write");
   const toast = useToast();
   const invalidate = useInvalidate();
 
@@ -51,11 +48,9 @@ export function CategoriesAdmin() {
   return (
     <div className="dashboard">
       <PageHeading title="Categories" text="The navigation, category pages and product grouping all read from this list.">
-        {writable ? (
-          <button type="button" className="btn primary" onClick={() => setEditing({ name: "", icon: "package", accent: "#8b5cf6", visible: true })}>
-            <Plus size={16} /> New category
-          </button>
-        ) : null}
+        <button type="button" className="btn primary" onClick={() => setEditing({ name: "", icon: "package", accent: "#8b5cf6", visible: true })}>
+          <Plus size={16} /> New category
+        </button>
       </PageHeading>
 
       {isLoading ? <Skeleton height={200} /> : null}
@@ -84,8 +79,7 @@ export function CategoriesAdmin() {
               </div>
             ) : null}
 
-            {writable ? (
-              <div className="category-admin-actions">
+            <div className="category-admin-actions">
                 <button type="button" className="edit-btn" onClick={() => setEditing(category)}><Edit3 size={13} /> Edit</button>
                 <button type="button" className="icon-btn" onClick={() => reorder(index, -1)} aria-label="Move up"><ArrowUp size={13} /></button>
                 <button type="button" className="icon-btn" onClick={() => reorder(index, 1)} aria-label="Move down"><ArrowDown size={13} /></button>
@@ -102,10 +96,9 @@ export function CategoriesAdmin() {
                   className="link-btn"
                   onClick={() => setEditing({ name: "", parentId: category.id, icon: "package", accent: category.accent, visible: true })}
                 >
-                  + Subcategory
-                </button>
-              </div>
-            ) : null}
+                + Subcategory
+              </button>
+            </div>
           </AdminPanel>
         ))}
       </div>

@@ -164,14 +164,14 @@ async function main() {
     skipDuplicates: true
   });
 
+  // A single administrator account; the panel has no staff management.
   const adminEmail = env.seed.adminEmail.toLowerCase();
   await prisma.user.upsert({
     where: { email: adminEmail },
     update: {},
     create: {
       email: adminEmail,
-      name: "Super Admin",
-      role: "super_admin",
+      name: "Administrator",
       passwordHash: await bcrypt.hash(env.seed.adminPassword, 12)
     }
   });

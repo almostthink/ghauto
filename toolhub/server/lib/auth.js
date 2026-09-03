@@ -7,19 +7,6 @@ export const SESSION_COOKIE = "th_session";
 export const CSRF_COOKIE = "th_csrf";
 export const CSRF_HEADER = "x-csrf-token";
 
-// Role capabilities. Every server-side permission check goes through `can()`.
-const PERMISSIONS = {
-  super_admin: ["*"],
-  editor: ["content.read", "content.write", "media.write", "analytics.read", "reviews.read"],
-  moderator: ["content.read", "reviews.read", "reviews.write", "analytics.read"],
-  analyst: ["content.read", "analytics.read", "reviews.read"]
-};
-
-export function can(role, permission) {
-  const granted = PERMISSIONS[role] || [];
-  return granted.includes("*") || granted.includes(permission);
-}
-
 export function hashPassword(plain) {
   return bcrypt.hash(plain, 12);
 }
@@ -30,7 +17,7 @@ export function verifyPassword(plain, hash) {
 
 export function signSession(user) {
   return jwt.sign(
-    { sub: user.id, email: user.email, role: user.role },
+    { sub: user.id, email: user.email },
     env.jwtSecret,
     { expiresIn: `${env.sessionTtlHours}h` }
   );
@@ -75,8 +62,6 @@ export function publicUser(user) {
     id: user.id,
     email: user.email,
     name: user.name,
-    role: user.role,
-    active: user.active,
     lastLoginAt: user.lastLoginAt,
     createdAt: user.createdAt
   };

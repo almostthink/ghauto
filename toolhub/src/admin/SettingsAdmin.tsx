@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { KeyRound, Loader2, Plus, Save, Trash2, UserRound } from "lucide-react";
 import { ErrorState, Skeleton, useToast } from "../components/ui";
+import { formatDate, formatRelative } from "../lib/format";
 import { ADMIN_PATH } from "../lib/config";
-import { useSaveSettings, useSettings } from "../lib/queries";
+import { useAuditLog, useSaveSettings, useSettings } from "../lib/queries";
 import type { Settings } from "../lib/types";
 import { AdminPanel, ImageField, PageHeading } from "./components";
+import { useAuth, useChangePassword, useUpdateProfile } from "./auth";
 
 // Everything a visitor reads outside product pages lives here: brand copy,
 // footer columns, SEO defaults and the public feature toggles.
@@ -184,6 +186,8 @@ export function SettingsAdmin() {
         </button>
       </AdminPanel>
 
+      <AccountPanel />
+
       <AdminPanel
         title="Public features"
         subtitle="Turn parts of the site on or off"
@@ -216,6 +220,125 @@ export function SettingsAdmin() {
           </label>
         </div>
       </AdminPanel>
+
+      <ActivityPanel />
     </div>
+  );
+}
+
+// The panel has one administrator, so the account lives here rather than in a
+// staff section: rename it, change the sign-in email, change the password.
+function AccountPanel() {
+  const { user } = useAuth();
+  const updateProfile = useUpdateProfile();
+  const changePassword = useChangePassword();
+  const toast = useToast();
+
+  const [name, setName] = useState(user?.name ?? "");
+  const [email, setEmail] = useState(user?.email ?? "");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [repeatPassword, setRepeatPassword] = useState("");
+
+  const saveProfile = async () => {
+    try {
+      await updateProfile.mutateAsync({ name, email });
+      toast("Account updated");
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Could not update the account", "error");
+    }
+  };
+
+  const savePassword = async () => {
+    if (newPassword !== repeatPassword) {
+      toast("The new passwords do not match", "error");
+      return;
+    }
+    try {
+      await changePassword.mutateAsync({ currentPassword, newPassword });
+      setCurrentPassword("");
+      setNewPassword("");
+      setRepeatPassword("");
+      toast("Password changed");
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Could not change the password", "error");
+    }
+  };
+
+  return (
+    <>
+      <AdminPanel
+        title="Administrator account"
+        subtitle="The only account that can sign in to this panel"
+        action={
+          <button type="button" className="btn ghost small" onClick={saveProfile} disabled={updateProfile.isPending}>
+            <UserRound size={13} /> Save
+          </button>
+        }
+      >
+        <div className="form-grid">
+          <label>Name<input value={name} onChange={(event) => setName(event.target.value)} /></label>
+          <label>Sign-in email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} /></label>
+        </div>
+        <p className="form-note">
+          Last sign in: {user?.lastLoginAt ? `${formatRelative(user.lastLoginAt)} (${formatDate(user.lastLoginAt)})` : "never"}.
+          There is no staff management and no visitor accounts: this is the only login in the whole system.
+        </p>
+      </AdminPanel>
+
+      <AdminPanel
+        title="Password"
+        subtitle="Change the sign-in password"
+        action={
+          <button
+            type="button"
+            className="btn ghost small"
+            onClick={savePassword}
+            disabled={changePassword.isPending || !currentPassword || newPassword.length < 10}
+          >
+            <KeyRound size={13} /> Change
+          </button>
+        }
+      >
+        <div className="form-grid">
+          <label>
+            Current password
+            <input type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} />
+          </label>
+          <label>
+            New password
+            <input type="password" autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="At least 10 characters" />
+          </label>
+          <label>
+            Repeat new password
+            <input type="password" autoComplete="new-password" value={repeatPassword} onChange={(event) => setRepeatPassword(event.target.value)} />
+          </label>
+        </div>
+        <p className="form-note">Change the seeded password before the site goes live.</p>
+      </AdminPanel>
+    </>
+  );
+}
+
+// Change history: what was edited in the panel and when.
+function ActivityPanel() {
+  const audit = useAuditLog(40);
+  return (
+    <AdminPanel title="Activity log" subtitle="Every change made in the admin panel" className="table-panel">
+      <table>
+        <thead><tr><th>When</th><th>Action</th><th>Entity</th><th>Account</th></tr></thead>
+        <tbody>
+          {(audit.data?.items ?? []).map((entry) => (
+            <tr key={entry.id}>
+              <td>{formatDate(entry.createdAt)} · {formatRelative(entry.createdAt)}</td>
+              <td>{entry.action.replace(/[._]/g, " ")}</td>
+              <td>{entry.entity}{entry.entityId ? ` · ${entry.entityId.slice(0, 8)}` : ""}</td>
+              <td>{entry.actorEmail || "system"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {audit.data && audit.data.items.length === 0 ? <p className="chart-empty">Nothing recorded yet.</p> : null}
+    </AdminPanel>
   );
 }

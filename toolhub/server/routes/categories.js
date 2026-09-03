@@ -3,7 +3,7 @@ import { prisma } from "../db.js";
 import { audit } from "../lib/audit.js";
 import { HttpError, notFound, parseBody, route } from "../lib/http.js";
 import { slugify, uniqueSlug } from "../lib/text.js";
-import { requirePermission } from "../middleware/auth.js";
+import { requireAuth } from "../middleware/auth.js";
 import { categoryPatchSchema, categorySchema } from "../schemas/index.js";
 
 export const categoriesRouter = express.Router();
@@ -58,7 +58,7 @@ categoriesRouter.get("/:idOrSlug", route(async (req, res) => {
   res.json(serialize(category));
 }));
 
-categoriesRouter.post("/", requirePermission("content.write"), route(async (req, res) => {
+categoriesRouter.post("/", requireAuth, route(async (req, res) => {
   const input = parseBody(categorySchema, req.body);
   const slug = await uniqueSlug(prisma.category, slugify(input.slug || input.name, "category"));
   const category = await prisma.category.create({ data: { ...input, slug } });
@@ -66,7 +66,7 @@ categoriesRouter.post("/", requirePermission("content.write"), route(async (req,
   res.status(201).json(serialize(category));
 }));
 
-categoriesRouter.put("/:id", requirePermission("content.write"), route(async (req, res) => {
+categoriesRouter.put("/:id", requireAuth, route(async (req, res) => {
   const existing = await prisma.category.findUnique({ where: { id: req.params.id } });
   if (!existing) throw notFound("Category not found");
   const input = parseBody(categoryPatchSchema, req.body);
@@ -85,7 +85,7 @@ categoriesRouter.put("/:id", requirePermission("content.write"), route(async (re
   res.json(serialize(category));
 }));
 
-categoriesRouter.delete("/:id", requirePermission("content.write"), route(async (req, res) => {
+categoriesRouter.delete("/:id", requireAuth, route(async (req, res) => {
   const category = await prisma.category.findUnique({
     where: { id: req.params.id },
     include: { _count: { select: { products: true, children: true } } }
@@ -99,7 +99,7 @@ categoriesRouter.delete("/:id", requirePermission("content.write"), route(async 
   res.status(204).end();
 }));
 
-categoriesRouter.post("/reorder", requirePermission("content.write"), route(async (req, res) => {
+categoriesRouter.post("/reorder", requireAuth, route(async (req, res) => {
   const ids = Array.isArray(req.body?.ids) ? req.body.ids.filter((id) => typeof id === "string") : [];
   if (!ids.length) throw new HttpError(400, "`ids` must be a non-empty array");
   await prisma.$transaction(

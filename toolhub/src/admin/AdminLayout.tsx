@@ -2,31 +2,29 @@ import { useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import {
   BarChart3, Download, FileText, Globe, Grid2X2, LayoutDashboard, LogOut, Menu,
-  Package, Settings, Star, Users, X
+  Package, Settings, Star, X
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { adminUrl } from "../lib/config";
-import { ROLE_LABELS, can, useAuth, useLogout } from "./auth";
+import { useAuth, useLogout } from "./auth";
 
 interface NavItem {
   label: string;
   to: string;
   icon: typeof LayoutDashboard;
-  permission: string;
   group: string;
 }
 
 const NAV: NavItem[] = [
-  { label: "Dashboard", to: "", icon: LayoutDashboard, permission: "content.read", group: "MANAGE" },
-  { label: "Products", to: "/products", icon: Package, permission: "content.read", group: "MANAGE" },
-  { label: "Categories", to: "/categories", icon: Grid2X2, permission: "content.read", group: "MANAGE" },
-  { label: "Pages", to: "/pages", icon: FileText, permission: "content.read", group: "MANAGE" },
-  { label: "Reviews", to: "/reviews", icon: Star, permission: "reviews.read", group: "MANAGE" },
-  { label: "Users", to: "/users", icon: Users, permission: "*", group: "MANAGE" },
-  { label: "Downloads", to: "/downloads", icon: Download, permission: "analytics.read", group: "ANALYTICS" },
-  { label: "Analytics", to: "/analytics", icon: BarChart3, permission: "analytics.read", group: "ANALYTICS" },
-  { label: "Countries", to: "/countries", icon: Globe, permission: "analytics.read", group: "ANALYTICS" },
-  { label: "Settings", to: "/settings", icon: Settings, permission: "content.write", group: "SETTINGS" }
+  { label: "Dashboard", to: "", icon: LayoutDashboard, group: "MANAGE" },
+  { label: "Products", to: "/products", icon: Package, group: "MANAGE" },
+  { label: "Categories", to: "/categories", icon: Grid2X2, group: "MANAGE" },
+  { label: "Pages", to: "/pages", icon: FileText, group: "MANAGE" },
+  { label: "Reviews", to: "/reviews", icon: Star, group: "MANAGE" },
+  { label: "Downloads", to: "/downloads", icon: Download, group: "ANALYTICS" },
+  { label: "Analytics", to: "/analytics", icon: BarChart3, group: "ANALYTICS" },
+  { label: "Countries", to: "/countries", icon: Globe, group: "ANALYTICS" },
+  { label: "Settings", to: "/settings", icon: Settings, group: "SETTINGS" }
 ];
 
 export function AdminLayout({ children }: { children: ReactNode }) {
@@ -35,10 +33,9 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const visible = NAV.filter((item) => can(user?.role, item.permission));
   const initials = (user?.name ?? "??").split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
-  const current = visible.find((item) => location.pathname === adminUrl(item.to))
-    ?? visible.filter((item) => item.to && location.pathname.startsWith(adminUrl(item.to))).pop();
+  const current = NAV.find((item) => location.pathname === adminUrl(item.to))
+    ?? NAV.filter((item) => item.to && location.pathname.startsWith(adminUrl(item.to))).pop();
 
   let lastGroup = "";
 
@@ -54,12 +51,12 @@ export function AdminLayout({ children }: { children: ReactNode }) {
           <div className="avatar profile-avatar">{initials}</div>
           <div>
             <b>{user?.name}</b>
-            <small>{user ? ROLE_LABELS[user.role] : ""}</small>
+            <small>{user?.email}</small>
           </div>
         </div>
 
         <nav>
-          {visible.map((item) => {
+          {NAV.map((item) => {
             const header = item.group !== lastGroup ? item.group : "";
             lastGroup = item.group;
             const Icon = item.icon;

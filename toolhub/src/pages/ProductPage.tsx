@@ -7,7 +7,7 @@ import {
 import { ProductCard } from "../components/ProductCard";
 import { ErrorState, Skeleton, StarRating, useToast } from "../components/ui";
 import { api, trackView } from "../lib/api";
-import { formatCompact, formatDate, formatNumber } from "../lib/format";
+import { formatBytes, formatCompact, formatDate, formatNumber } from "../lib/format";
 import { useProduct, useRelatedProducts, useReviews, useSettings } from "../lib/queries";
 import { useSeo } from "../lib/seo";
 import type { Product } from "../lib/types";
@@ -228,7 +228,7 @@ export function ProductPage() {
 
             <div className="hero-actions">
               <a className="btn primary" href={`/api/products/${product.id}/download`} rel="nofollow noopener">
-                <Download size={17} /> Download
+                <Download size={17} /> {product.hasFile ? `Download${product.fileBytes ? ` (${formatBytes(product.fileBytes)})` : ""}` : "Download"}
               </a>
               {product.officialUrl ? (
                 <a className="btn ghost" href={product.officialUrl} target="_blank" rel="noopener noreferrer">
@@ -303,7 +303,7 @@ export function ProductPage() {
               ["Category", product.category?.name ?? "—"],
               ["License", product.license || product.price],
               ["Version", product.version],
-              ["File size", product.fileSize || "—"],
+              ["File size", product.fileSize || (product.fileBytes ? formatBytes(product.fileBytes) : "—")],
               ["Last update", formatDate(product.updatedAt)],
               ["Views", showDownloads ? formatCompact(product.views) : "—"]
             ].map(([label, value]) => (

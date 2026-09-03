@@ -7,7 +7,6 @@ import { formatRelative } from "../lib/format";
 import { usePages, useSavePage } from "../lib/queries";
 import type { BlockType, Page, PageBlock } from "../lib/types";
 import { AdminPanel, ImageField, PageHeading } from "./components";
-import { can, useAuth } from "./auth";
 
 // Every block type the renderer understands, with the fields the CMS exposes
 // for it. Adding a type here is all it takes to offer it in the builder.
@@ -74,8 +73,6 @@ const BLOCK_FIELDS: Record<BlockType, { key: string; label: string; type: "text"
 const BLOCK_TYPES = Object.keys(BLOCK_FIELDS) as BlockType[];
 
 export function PagesAdmin() {
-  const { user } = useAuth();
-  const writable = can(user?.role, "content.write");
   const toast = useToast();
 
   const { data, isLoading, error, refetch } = usePages();
@@ -135,11 +132,9 @@ export function PagesAdmin() {
         <a className="btn ghost" href={`/${draft.slug === "home" ? "" : draft.slug}`} target="_blank" rel="noopener noreferrer">
           <Eye size={15} /> Preview
         </a>
-        {writable ? (
-          <button type="button" className="btn primary" onClick={submit} disabled={savePage.isPending}>
-            {savePage.isPending ? <Loader2 size={15} className="spin" /> : <Save size={15} />} Save page
-          </button>
-        ) : null}
+        <button type="button" className="btn primary" onClick={submit} disabled={savePage.isPending}>
+          {savePage.isPending ? <Loader2 size={15} className="spin" /> : <Save size={15} />} Save page
+        </button>
       </PageHeading>
 
       <div className="page-builder">
@@ -187,8 +182,7 @@ export function PagesAdmin() {
               subtitle={`Block ${index + 1} of ${draft.blocks.length}`}
               className={block.visible ? "block-card" : "block-card hidden-block"}
               action={
-                writable ? (
-                  <div className="block-actions">
+                <div className="block-actions">
                     <button type="button" className="icon-btn" onClick={() => move(index, -1)} aria-label="Move up"><ArrowUp size={13} /></button>
                     <button type="button" className="icon-btn" onClick={() => move(index, 1)} aria-label="Move down"><ArrowDown size={13} /></button>
                     <button
@@ -217,18 +211,16 @@ export function PagesAdmin() {
                       onClick={() => setDraft({ ...draft, blocks: draft.blocks.filter((_, i) => i !== index) })}
                       aria-label="Delete block"
                     >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                ) : null
+                    <Trash2 size={13} />
+                  </button>
+                </div>
               }
             >
               <BlockFields block={block} onChange={(key, value) => setField(index, key, value)} />
             </AdminPanel>
           ))}
 
-          {writable ? (
-            <AdminPanel title="Add a block" subtitle="Appended at the end of the page">
+          <AdminPanel title="Add a block" subtitle="Appended at the end of the page">
               <div className="block-picker">
                 {BLOCK_TYPES.map((type) => (
                   <button
@@ -240,9 +232,8 @@ export function PagesAdmin() {
                     <Plus size={12} /> {type}
                   </button>
                 ))}
-              </div>
-            </AdminPanel>
-          ) : null}
+            </div>
+          </AdminPanel>
         </div>
       </div>
     </div>

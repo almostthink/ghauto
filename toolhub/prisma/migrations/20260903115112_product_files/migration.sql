@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "Product" ADD COLUMN     "fileBytes" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "fileKey" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "fileName" TEXT NOT NULL DEFAULT '';
+

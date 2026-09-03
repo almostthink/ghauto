@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, queryString } from "./api";
 import type {
   AnalyticsOverview, Category, CountryRow, DateRange, Page, Paginated, Product,
-  Review, SeriesPoint, Settings, StaffUser, TopProduct
+  Review, SeriesPoint, Settings, TopProduct
 } from "./types";
 
 export interface ProductFilters extends Record<string, string | number | boolean | undefined> {
@@ -74,15 +74,12 @@ export const useReviews = (params: { productId?: string; status?: string; limit?
       api<{ items: Review[]; counts: Record<string, number> }>(`/reviews${queryString(params)}`)
   });
 
-export const useUsers = () =>
-  useQuery({ queryKey: ["users"], queryFn: () => api<{ items: StaffUser[] }>("/users") });
-
 export const useAuditLog = (limit = 20) =>
   useQuery({
     queryKey: ["audit", limit],
     queryFn: () =>
       api<{ items: { id: string; actorEmail: string; action: string; entity: string; entityId: string; createdAt: string }[] }>(
-        `/users/audit/log${queryString({ limit })}`
+        `/audit${queryString({ limit })}`
       )
   });
 
@@ -211,29 +208,62 @@ export function useDeleteReview() {
   });
 }
 
-export function useSaveUser() {
-  const invalidate = useInvalidate();
-  return useMutation({
-    mutationFn: ({ id, values }: { id?: string; values: Record<string, unknown> }) =>
-      api<StaffUser>(id ? `/users/${id}` : "/users", { method: id ? "PUT" : "POST", body: values }),
-    onSuccess: () => invalidate(["users"])
-  });
-}
-
-export function useDeleteUser() {
-  const invalidate = useInvalidate();
-  return useMutation({
-    mutationFn: (id: string) => api<void>(`/users/${id}`, { method: "DELETE" }),
-    onSuccess: () => invalidate(["users"])
-  });
-}
-
 export function useSaveSettings() {
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: ({ key, value }: { key: string; value: Record<string, unknown> }) =>
       api<{ key: string }>(`/settings/${key}`, { method: "PUT", body: { value } }),
     onSuccess: () => invalidate(["settings"])
+  });
+}
+
+export const useFileLimits = () =>
+  useQuery({
+    queryKey: ["file-limits"],
+    queryFn: () => api<{ maxBytes: number; maxMb: number }>("/products/file/limits"),
+    staleTime: 10 * minute
+  });
+
+// Installers can be hundreds of megabytes, so the file is streamed as the raw
+// request body through XHR, which also gives us upload progress.
+export function useUploadProductFile() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: ({ id, file, onProgress }: { id: string; file: File; onProgress?: (percent: number) => void }) =>
+      new Promise<Product>((resolve, reject) => {
+        const request = new XMLHttpRequest();
+        request.open("PUT", `/api/products/${id}/file?filename=${encodeURIComponent(file.name)}`);
+        request.setRequestHeader("Content-Type", "application/octet-stream");
+        const csrf = document.cookie.match(/(?:^|;\s*)th_csrf=([^;]+)/);
+        if (csrf) request.setRequestHeader("x-csrf-token", decodeURIComponent(csrf[1]));
+        request.upload.onprogress = (event) => {
+          if (event.lengthComputable && onProgress) onProgress(Math.round((event.loaded / event.total) * 100));
+        };
+        request.onload = () => {
+          if (request.status >= 200 && request.status < 300) {
+            resolve(JSON.parse(request.responseText) as Product);
+          } else {
+            let message = `Upload failed (${request.status})`;
+            try {
+              message = (JSON.parse(request.responseText) as { error?: string }).error ?? message;
+            } catch {
+              /* keep the status message */
+            }
+            reject(new Error(message));
+          }
+        };
+        request.onerror = () => reject(new Error("Upload failed: the connection dropped"));
+        request.send(file);
+      }),
+    onSuccess: () => invalidate(["products", "product"])
+  });
+}
+
+export function useDeleteProductFile() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: (id: string) => api<Product>(`/products/${id}/file`, { method: "DELETE" }),
+    onSuccess: () => invalidate(["products", "product"])
   });
 }
 

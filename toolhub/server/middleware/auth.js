@@ -1,9 +1,9 @@
 import { prisma } from "../db.js";
-import { CSRF_COOKIE, CSRF_HEADER, SESSION_COOKIE, can, verifySession } from "../lib/auth.js";
+import { CSRF_COOKIE, CSRF_HEADER, SESSION_COOKIE, verifySession } from "../lib/auth.js";
 import { forbidden, unauthorized } from "../lib/http.js";
 
 // Attaches req.user when a valid session cookie is present. Never rejects:
-// route guards decide what an anonymous request is allowed to do.
+// requireAuth decides what an anonymous request is allowed to do.
 export async function attachUser(req, _res, next) {
   try {
     const token = req.cookies?.[SESSION_COOKIE];
@@ -11,26 +11,19 @@ export async function attachUser(req, _res, next) {
     const payload = verifySession(token);
     if (!payload) return next();
     const user = await prisma.user.findUnique({ where: { id: payload.sub } });
-    if (user && user.active) req.user = user;
+    if (user) req.user = user;
     next();
   } catch (error) {
     next(error);
   }
 }
 
+// The only authorization gate: the panel has a single administrator, so every
+// admin route needs a valid session and nothing more. Checked server-side on
+// each request, never inferred from what the client chose to render.
 export function requireAuth(req, _res, next) {
   if (!req.user) return next(unauthorized());
   next();
-}
-
-// Permission gate. Checked server-side on every mutating admin route; the
-// client-side menu is a convenience, not the boundary.
-export function requirePermission(permission) {
-  return (req, _res, next) => {
-    if (!req.user) return next(unauthorized());
-    if (!can(req.user.role, permission)) return next(forbidden(`Missing permission: ${permission}`));
-    next();
-  };
 }
 
 // Double-submit CSRF: the cookie is readable by the admin SPA and must be

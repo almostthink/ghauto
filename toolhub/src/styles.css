@@ -323,3 +323,12 @@
 .footer-grid .brand{display:flex;align-items:center;gap:9px}
 .footer-grid .brand-mark{display:grid}
 .side-panel{align-self:start}
+
+/* --- Installer file panel ------------------------------------------------ */
+.file-row{display:flex;align-items:center;gap:11px;border:1px solid var(--line);background:#0b111b;border-radius:9px;padding:11px}
+.file-row>div{flex:1;min-width:0}
+.file-row b{display:block;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-row small{display:block;color:#66748a;font-size:9px;margin-top:3px}
+.file-icon{width:32px;height:32px;flex:0 0 32px;border-radius:8px;display:grid;place-items:center;background:#7d4be514;color:#a57dff}
+.upload-progress{margin-top:11px}
+.upload-progress small{display:block;color:#75839a;font-size:9px;margin-top:6px}

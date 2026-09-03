@@ -1,6 +1,6 @@
 // ToolHub database schema.
 // The public site is fully anonymous: there are no visitor accounts.
-// `User` rows are staff accounts for the hidden admin panel only.
+// `User` holds the single administrator account for the hidden admin panel.
 
 generator client {
   provider = "prisma-client-js"
@@ -9,13 +9,6 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-}
-
-enum Role {
-  super_admin
-  editor
-  moderator
-  analyst
 }
 
 enum ProductStatus {
@@ -51,15 +44,11 @@ model User {
   email        String    @unique
   name         String
   passwordHash String
-  role         Role      @default(editor)
-  active       Boolean   @default(true)
   lastLoginAt  DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
   auditLogs AuditLog[]
-
-  @@index([role])
 }
 
 model Category {
@@ -119,6 +108,11 @@ model Product {
   license  String @default("Free")
   price    String @default("Free")
 
+  // A product is distributed either from a file stored on this server
+  // (fileKey, inside PRODUCTS_DIR) or by redirecting to downloadUrl.
+  fileKey     String @default("")
+  fileName    String @default("")
+  fileBytes   Int    @default(0)
   downloadUrl String @default("")
   officialUrl String @default("")
   thumbnail   String @default("")

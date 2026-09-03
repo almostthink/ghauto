@@ -51,6 +51,14 @@ export const env = {
     .filter(Boolean),
   publicSiteUrl: (process.env.PUBLIC_SITE_URL || "http://localhost:5173").replace(/\/$/, ""),
   adminPath: (process.env.ADMIN_PATH || "/admin").replace(/\/$/, "") || "/admin",
+  // Product installers are stored on disk and streamed by the download
+  // endpoint. They are never exposed through a static route.
+  products: {
+    dir: process.env.PRODUCTS_DIR
+      ? path.resolve(rootDir, process.env.PRODUCTS_DIR)
+      : path.join(dirname, "products"),
+    maxBytes: Number(process.env.PRODUCT_FILE_MAX_MB || 512) * 1024 * 1024
+  },
   storage: {
     driver: process.env.STORAGE_DRIVER === "s3" ? "s3" : "local",
     endpoint: (process.env.S3_ENDPOINT || "").replace(/\/$/, ""),
