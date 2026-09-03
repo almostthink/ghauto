@@ -155,28 +155,58 @@ sudo systemctl status toolhub
 journalctl -u toolhub -f
 ```
 
-### 7. nginx
+### 7. nginx и сертификат
 
-Готовый конфиг лежит в `deploy/nginx-toolhub.conf`: он уже настроен под большие
-загрузки установщиков и под восстановление реальных IP за Cloudflare.
+В `deploy/` лежат два готовых конфига, выберите один.
+
+**Вариант А, домен уже за Cloudflare (рекомендуется).** Сертификат берётся
+прямо в Cloudflare, он действует 15 лет, не требует продления, и прокси
+(оранжевое облако) не нужно выключать.
+
+1. В панели: **SSL/TLS → Origin Server → Create Certificate**, оставьте
+   RSA и список хостов `example.com, *.example.com`, срок 15 лет. Cloudflare
+   покажет два блока текста, оба нужны один раз, потом закроются навсегда.
+2. На сервере сохраните их:
+
+```bash
+sudo mkdir -p /etc/ssl/cloudflare
+sudo nano /etc/ssl/cloudflare/origin.pem     # вставить Origin Certificate
+sudo nano /etc/ssl/cloudflare/origin.key     # вставить Private Key
+sudo chmod 600 /etc/ssl/cloudflare/origin.key
+sudo chmod 644 /etc/ssl/cloudflare/origin.pem
+```
+
+3. Конфиг и диапазоны Cloudflare:
+
+```bash
+sudo cp /opt/toolhub/src/toolhub/deploy/nginx-toolhub-cloudflare.conf /etc/nginx/sites-available/toolhub
+sudo sed -i 's/example\.com/ВАШ-ДОМЕН.com/g' /etc/nginx/sites-available/toolhub
+sudo ln -sf /etc/nginx/sites-available/toolhub /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+
+sudo /opt/toolhub/src/toolhub/deploy/cloudflare-ips.sh
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+4. В панели **SSL/TLS → Overview → Full (strict)** и включите `TRUST_CLOUDFLARE=1`
+   в `.env`, затем `sudo systemctl restart toolhub`.
+
+**Вариант Б, без Cloudflare.** Обычный Let's Encrypt:
 
 ```bash
 sudo cp /opt/toolhub/src/toolhub/deploy/nginx-toolhub.conf /etc/nginx/sites-available/toolhub
-sudo nano /etc/nginx/sites-available/toolhub          # заменить example.com
-sudo ln -s /etc/nginx/sites-available/toolhub /etc/nginx/sites-enabled/
+sudo sed -i 's/example\.com/ВАШ-ДОМЕН.com/g' /etc/nginx/sites-available/toolhub
+sudo sed -i '/cloudflare-ips.conf/d; /real_ip_header CF-Connecting-IP/d' /etc/nginx/sites-available/toolhub
+sudo ln -sf /etc/nginx/sites-available/toolhub /etc/nginx/sites-enabled/
 sudo rm -f /etc/nginx/sites-enabled/default
-
-# файл с диапазонами Cloudflare, на который ссылается конфиг
-sudo /opt/toolhub/src/toolhub/deploy/cloudflare-ips.sh
-
 sudo nginx -t && sudo systemctl reload nginx
+
 sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d example.com -d www.example.com
+sudo certbot --nginx -d ВАШ-ДОМЕН.com -d www.ВАШ-ДОМЕН.com
 ```
 
-Если Cloudflare не используется, уберите из конфига строки `include
-/etc/nginx/cloudflare-ips.conf;` и `real_ip_header CF-Connecting-IP;` и не
-запускайте скрипт с диапазонами.
+Если домен при этом всё же проксируется Cloudflare, на время выпуска
+сертификата переключите запись на серое облако, иначе проверка не пройдёт.
 
 Приложение доверяет одному прокси (`trust proxy = 1`), поэтому rate limit
 считает реальные IP. Подробности про Cloudflare в разделе ниже.
@@ -240,8 +270,9 @@ curl -sI https://example.com/sitemap.xml
 rate limit блокирует всех сразу.
 
 ```bash
-sudo cp /opt/toolhub/src/toolhub/deploy/nginx-toolhub.conf /etc/nginx/sites-available/toolhub
-sudo nano /etc/nginx/sites-available/toolhub     # заменить example.com
+# конфиг с Origin Certificate, если ещё не поставили его на шаге 7 деплоя
+sudo cp /opt/toolhub/src/toolhub/deploy/nginx-toolhub-cloudflare.conf /etc/nginx/sites-available/toolhub
+sudo sed -i 's/example\.com/ВАШ-ДОМЕН.com/g' /etc/nginx/sites-available/toolhub
 sudo /opt/toolhub/src/toolhub/deploy/cloudflare-ips.sh
 ```
 
