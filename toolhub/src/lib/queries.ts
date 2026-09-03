@@ -60,6 +60,19 @@ export const usePage = (slug: string) =>
 export const usePages = () =>
   useQuery({ queryKey: ["pages"], queryFn: () => api<{ items: Page[] }>("/pages") });
 
+export interface RuntimeConfig {
+  adminPath: string;
+  turnstile: { enabled: boolean; siteKey: string; reviews: boolean; login: boolean };
+}
+
+// Server-side switches the client needs before it renders its forms.
+export const useConfig = () =>
+  useQuery({
+    queryKey: ["config"],
+    queryFn: () => api<RuntimeConfig>("/config"),
+    staleTime: 30 * minute
+  });
+
 export const useSettings = () =>
   useQuery({
     queryKey: ["settings"],

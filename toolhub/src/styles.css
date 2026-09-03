@@ -332,3 +332,7 @@
 .file-icon{width:32px;height:32px;flex:0 0 32px;border-radius:8px;display:grid;place-items:center;background:#7d4be514;color:#a57dff}
 .upload-progress{margin-top:11px}
 .upload-progress small{display:block;color:#75839a;font-size:9px;margin-top:6px}
+
+/* --- Turnstile ----------------------------------------------------------- */
+.turnstile-field{margin:14px 0}
+.login-card .turnstile-field{margin:4px 0 14px}

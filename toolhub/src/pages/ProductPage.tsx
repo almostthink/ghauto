@@ -5,10 +5,11 @@ import {
   BadgeCheck, Check, Download, ExternalLink, Flag, Globe, History, Monitor, Star
 } from "lucide-react";
 import { ProductCard } from "../components/ProductCard";
+import { Turnstile } from "../components/Turnstile";
 import { ErrorState, Skeleton, StarRating, useToast } from "../components/ui";
 import { api, trackView } from "../lib/api";
 import { formatBytes, formatCompact, formatDate, formatNumber } from "../lib/format";
-import { useProduct, useRelatedProducts, useReviews, useSettings } from "../lib/queries";
+import { useConfig, useProduct, useRelatedProducts, useReviews, useSettings } from "../lib/queries";
 import { useSeo } from "../lib/seo";
 import type { Product } from "../lib/types";
 import { NotFound } from "./NotFound";
@@ -22,8 +23,11 @@ interface ReviewForm {
 
 function ReviewSection({ product }: { product: Product }) {
   const { data, isLoading, refetch } = useReviews({ productId: product.id, limit: 20 });
+  const { data: config } = useConfig();
   const [submitted, setSubmitted] = useState(false);
+  const [botToken, setBotToken] = useState("");
   const toast = useToast();
+  const needsChallenge = config?.turnstile.reviews === true;
   const {
     register, handleSubmit, reset, formState: { errors, isSubmitting }
   } = useForm<ReviewForm>({ defaultValues: { authorName: "", rating: 5, title: "", body: "" } });
@@ -32,7 +36,12 @@ function ReviewSection({ product }: { product: Product }) {
     try {
       await api("/reviews", {
         method: "POST",
-        body: { ...values, rating: Number(values.rating), productId: product.id }
+        body: {
+          ...values,
+          rating: Number(values.rating),
+          productId: product.id,
+          ...(needsChallenge ? { turnstileToken: botToken } : {})
+        }
       });
       setSubmitted(true);
       reset();
@@ -40,6 +49,9 @@ function ReviewSection({ product }: { product: Product }) {
       refetch();
     } catch (error) {
       toast(error instanceof Error ? error.message : "Could not submit the review", "error");
+      // The token is single use: whatever went wrong, the next attempt needs a
+      // fresh one.
+      setBotToken("");
     }
   });
 
@@ -97,7 +109,15 @@ function ReviewSection({ product }: { product: Product }) {
             {errors.body ? <em className="field-error">{errors.body.message}</em> : null}
           </label>
         </div>
-        <button className="btn primary" type="submit" disabled={isSubmitting || submitted}>
+        {needsChallenge && config ? (
+          <Turnstile siteKey={config.turnstile.siteKey} onToken={setBotToken} />
+        ) : null}
+
+        <button
+          className="btn primary"
+          type="submit"
+          disabled={isSubmitting || submitted || (needsChallenge && !botToken)}
+        >
           {submitted ? "Submitted for review" : isSubmitting ? "Sending…" : "Submit review"}
         </button>
       </form>

@@ -152,44 +152,29 @@ journalctl -u toolhub -f
 
 ### 7. nginx
 
-`/etc/nginx/sites-available/toolhub`:
-
-```nginx
-server {
-    listen 80;
-    server_name example.com www.example.com;
-
-    # запас над PRODUCT_FILE_MAX_MB, иначе nginx обрежет загрузку установщика
-    client_max_body_size 600m;
-
-    location / {
-        proxy_pass http://127.0.0.1:4000;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-
-        # большие файлы: не буферизуем и даём время на медленный аплоад
-        proxy_request_buffering off;
-        proxy_buffering off;
-        proxy_read_timeout 600s;
-        proxy_send_timeout 600s;
-    }
-}
-```
+Готовый конфиг лежит в `deploy/nginx-toolhub.conf`: он уже настроен под большие
+загрузки установщиков и под восстановление реальных IP за Cloudflare.
 
 ```bash
+sudo cp /opt/toolhub/src/toolhub/deploy/nginx-toolhub.conf /etc/nginx/sites-available/toolhub
+sudo nano /etc/nginx/sites-available/toolhub          # заменить example.com
 sudo ln -s /etc/nginx/sites-available/toolhub /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+
+# файл с диапазонами Cloudflare, на который ссылается конфиг
+sudo /opt/toolhub/src/toolhub/deploy/cloudflare-ips.sh
+
 sudo nginx -t && sudo systemctl reload nginx
 sudo apt install -y certbot python3-certbot-nginx
 sudo certbot --nginx -d example.com -d www.example.com
 ```
 
+Если Cloudflare не используется, уберите из конфига строки `include
+/etc/nginx/cloudflare-ips.conf;` и `real_ip_header CF-Connecting-IP;` и не
+запускайте скрипт с диапазонами.
+
 Приложение доверяет одному прокси (`trust proxy = 1`), поэтому rate limit
-считает реальные IP из `X-Forwarded-For`. Если перед nginx стоит Cloudflare,
-страна в аналитике возьмётся из `CF-IPCountry` автоматически, для другого
-CDN пробросьте `X-Country-Code`.
+считает реальные IP. Подробности про Cloudflare в разделе ниже.
 
 ### 8. Первый вход
 
@@ -227,6 +212,150 @@ curl -s https://example.com/api/health     # {"status":"ok","database":"up"}
 curl -s https://example.com/robots.txt     # Disallow должен указывать на ваш ADMIN_PATH
 curl -sI https://example.com/sitemap.xml
 ```
+
+## Cloudflare: защита от ботов
+
+Порядок такой: сначала закрываем origin, потом включаем фильтры на краю, потом
+ставим Turnstile на формы. Домен в примерах `example.com`.
+
+### Шаг 1. Домен в Cloudflare
+
+1. Add site, выберите домен, план Free подходит.
+2. Пропишите у регистратора NS-серверы, которые выдаст Cloudflare.
+3. В **DNS** запись `A example.com` → IP сервера, **Proxy status: Proxied**
+   (оранжевое облако). То же для `www`. Серое облако означает, что трафик идёт
+   мимо Cloudflare и защита не работает.
+4. **SSL/TLS → Overview → Full (strict)**. Сертификат на сервере уже есть от
+   certbot, этого достаточно.
+5. **SSL/TLS → Edge Certificates**: Always Use HTTPS — On, Minimum TLS 1.2.
+
+### Шаг 2. Реальные IP посетителей
+
+Без этого шага все посетители выглядят как несколько IP Cloudflare, и любой
+rate limit блокирует всех сразу.
+
+```bash
+sudo cp /opt/toolhub/src/toolhub/deploy/nginx-toolhub.conf /etc/nginx/sites-available/toolhub
+sudo nano /etc/nginx/sites-available/toolhub     # заменить example.com
+sudo /opt/toolhub/src/toolhub/deploy/cloudflare-ips.sh
+```
+
+Скрипт скачивает актуальные диапазоны Cloudflare, кладёт их в
+`/etc/nginx/cloudflare-ips.conf` и перезагружает nginx. Раз в месяц по cron:
+
+```bash
+sudo crontab -e
+# 0 4 1 * * /opt/toolhub/src/toolhub/deploy/cloudflare-ips.sh --ufw >/dev/null
+```
+
+В `.env` включите доверие к заголовку края:
+
+```ini
+TRUST_CLOUDFLARE=1
+```
+
+Только с этим флагом сервер читает адрес из `CF-Connecting-IP`. Флаг нельзя
+включать, если origin доступен из интернета напрямую: тогда заголовок сможет
+подделать кто угодно и обойти лимиты.
+
+### Шаг 3. Закрыть origin от прямого доступа
+
+Пока сервер отвечает по своему IP, злоумышленник обходит Cloudflare целиком.
+
+```bash
+sudo ufw allow OpenSSH
+sudo /opt/toolhub/src/toolhub/deploy/cloudflare-ips.sh --ufw
+sudo ufw enable
+sudo ufw status                     # 80/443 только с диапазонов Cloudflare
+```
+
+Проверка: `curl -I --resolve example.com:443:<IP-сервера> https://example.com`
+должен таймаутиться, а обычный `curl -I https://example.com` работать.
+
+### Шаг 4. Фильтры Cloudflare
+
+**Security → Bots**: Bot Fight Mode — On (на Free). На платных планах Super Bot
+Fight Mode: Definitely automated — Block, Likely automated — Managed Challenge,
+Verified bots — Allow, чтобы не потерять Googlebot.
+
+**Security → WAF → Custom rules**, создайте по порядку:
+
+| Правило | Выражение | Действие |
+| --- | --- | --- |
+| Admin panel | `(http.request.uri.path contains "/p-7f3a91")` | Managed Challenge |
+| Block bad methods | `(not http.request.method in {"GET" "HEAD" "POST" "PUT" "DELETE" "OPTIONS"})` | Block |
+| Protect write API | `(http.request.uri.path contains "/api/" and http.request.method in {"POST" "PUT" "DELETE"} and cf.threat_score gt 14)` | Managed Challenge |
+
+Путь в первом правиле должен совпадать с вашим `ADMIN_PATH`.
+
+**Security → WAF → Rate limiting rules**:
+
+| Правило | Выражение | Лимит | Действие |
+| --- | --- | --- | --- |
+| Downloads | `http.request.uri.path contains "/download"` | 30 запросов за 1 мин с IP | Block на 10 мин |
+| Reviews | `http.request.uri.path eq "/api/reviews" and http.request.method eq "POST"` | 5 за 10 мин с IP | Managed Challenge |
+| Login | `http.request.uri.path eq "/api/auth/login"` | 10 за 10 мин с IP | Block на 1 час |
+
+Это второй рубеж: свои лимиты в приложении остаются на случай, если запрос
+всё же дойдёт до сервера.
+
+**Caching → Cache Rules**: для `/api/*` поставьте Bypass cache, иначе счётчики
+скачиваний и модерация будут отдавать закешированные ответы. Статику
+(`/assets/*`) Cloudflare кеширует сама по заголовкам.
+
+### Шаг 5. Turnstile на формах
+
+Cloudflare фильтрует трафик, Turnstile закрывает конкретно формы: отзывы и вход
+в админку.
+
+1. **Turnstile → Add widget**, домен `example.com`, режим Managed.
+2. Скопируйте Site Key и Secret Key в `.env`:
+
+```ini
+TURNSTILE_SITE_KEY="0x4AAAAAAA..."
+TURNSTILE_SECRET_KEY="0x4AAAAAAA..."
+TURNSTILE_PROTECT_REVIEWS=1
+TURNSTILE_PROTECT_LOGIN=1
+```
+
+3. `sudo systemctl restart toolhub`.
+
+Как это работает:
+
+- без ключей проверка полностью выключена, приложение работает как раньше;
+- с ключами виджет появляется в форме отзыва и на входе в админку, кнопка
+  отправки недоступна, пока проверка не пройдена;
+- сервер проверяет токен через siteverify **до** записи в базу, токен
+  одноразовый, повторное использование отклоняется;
+- если Cloudflare недоступен, запрос отклоняется, а не пропускается: сомнение
+  трактуется не в пользу отправителя;
+- CSP расширяется на `challenges.cloudflare.com` только когда проверка включена.
+
+### Шаг 6. Дополнительно на админку
+
+Самое надёжное для панели, доступной одному человеку, это **Zero Trust →
+Access → Applications**: приложение с путём `example.com/p-7f3a91`, политика
+Allow → Emails → ваш адрес. Cloudflare будет спрашивать одноразовый код по
+почте ещё до того, как запрос дойдёт до сервера. Бесплатно до 50 пользователей.
+
+### Проверка
+
+```bash
+# страна доезжает до аналитики
+curl -s -H "CF-IPCountry: DE" https://example.com/api/products >/dev/null
+
+# без токена отзыв не проходит, когда Turnstile включён
+curl -s -X POST https://example.com/api/reviews \
+  -H 'Content-Type: application/json' \
+  -d '{"productId":"...","authorName":"test","rating":5,"body":"проверка проверка"}'
+# {"error":"Bot check missing. Reload the page and try again."}
+
+# в админке в разделе Countries появляются реальные страны, а не Unknown
+```
+
+Если после включения прокси в Cloudflare сайт отдаёт 521 или 522, значит ufw
+уже закрыл порты, а диапазоны ещё не добавлены: запустите
+`cloudflare-ips.sh --ufw` ещё раз.
 
 ## Скрытая админ-панель
 
@@ -379,7 +508,9 @@ magic-number файла, а не заявленный `Content-Type`, и огр�
 - rate limiting: вход, скачивания, отзывы, загрузки, общий лимит API;
 - helmet с CSP, CORS по списку разрешённых origin;
 - валидация Zod на каждом входящем теле запроса;
-- audit log всех административных изменений.
+- audit log всех административных изменений;
+- Cloudflare Turnstile на отзывах и входе в админку (см. раздел выше), при
+  недоступности проверки запрос отклоняется.
 
 ## SEO
 

@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { KeyRound, Lock, Mail } from "lucide-react";
 import { Spinner } from "../components/ui";
+import { Turnstile } from "../components/Turnstile";
+import { useConfig } from "../lib/queries";
 import { useLogin } from "./auth";
 
 interface LoginForm {
@@ -12,9 +15,17 @@ interface LoginForm {
 // and there is no "create account" path: staff are added from inside.
 export function Login() {
   const login = useLogin();
+  const { data: config } = useConfig();
+  const [botToken, setBotToken] = useState("");
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>();
 
-  const onSubmit = handleSubmit((values) => login.mutate(values));
+  const needsChallenge = config?.turnstile.login === true;
+  const onSubmit = handleSubmit((values) =>
+    login.mutate(
+      { ...values, ...(needsChallenge ? { turnstileToken: botToken } : {}) },
+      { onError: () => setBotToken("") }
+    )
+  );
 
   return (
     <div className="login-shell">
@@ -49,7 +60,15 @@ export function Login() {
           <div className="login-error">{login.error instanceof Error ? login.error.message : "Sign in failed"}</div>
         ) : null}
 
-        <button className="btn primary full" type="submit" disabled={login.isPending}>
+        {needsChallenge && config ? (
+          <Turnstile siteKey={config.turnstile.siteKey} onToken={setBotToken} />
+        ) : null}
+
+        <button
+          className="btn primary full"
+          type="submit"
+          disabled={login.isPending || (needsChallenge && !botToken)}
+        >
           {login.isPending ? <Spinner size={14} /> : null} Sign in
         </button>
         <small className="login-note">Sessions expire automatically. Repeated failures are rate limited.</small>

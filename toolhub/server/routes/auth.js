@@ -3,6 +3,7 @@ import { prisma } from "../db.js";
 import { audit } from "../lib/audit.js";
 import { clearCookies, issueCookies, hashPassword, publicUser, verifyPassword } from "../lib/auth.js";
 import { HttpError, parseBody, route, unauthorized } from "../lib/http.js";
+import { turnstileRequired, verifyTurnstile } from "../lib/turnstile.js";
 import { requireAuth } from "../middleware/auth.js";
 import { loginLimiter } from "../middleware/limits.js";
 import { changePasswordSchema, loginSchema, profileSchema } from "../schemas/index.js";
@@ -10,6 +11,7 @@ import { changePasswordSchema, loginSchema, profileSchema } from "../schemas/ind
 export const authRouter = express.Router();
 
 authRouter.post("/login", loginLimiter, route(async (req, res) => {
+  if (turnstileRequired("login")) await verifyTurnstile(req.body?.turnstileToken, req);
   const { email, password } = parseBody(loginSchema, req.body);
   const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
 

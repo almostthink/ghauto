@@ -51,6 +51,19 @@ export const env = {
     .filter(Boolean),
   publicSiteUrl: (process.env.PUBLIC_SITE_URL || "http://localhost:5173").replace(/\/$/, ""),
   adminPath: (process.env.ADMIN_PATH || "/admin").replace(/\/$/, "") || "/admin",
+  // Set when the origin sits behind Cloudflare. Only then is CF-Connecting-IP
+  // believed: at a directly reachable origin anyone could forge it.
+  trustCloudflare: process.env.TRUST_CLOUDFLARE === "1",
+  turnstile: {
+    siteKey: process.env.TURNSTILE_SITE_KEY || "",
+    secretKey: process.env.TURNSTILE_SECRET_KEY || "",
+    get enabled() {
+      return Boolean(this.siteKey && this.secretKey);
+    },
+    // Which forms must carry a solved challenge.
+    protectReviews: process.env.TURNSTILE_PROTECT_REVIEWS !== "0",
+    protectLogin: process.env.TURNSTILE_PROTECT_LOGIN !== "0"
+  },
   // Product installers are stored on disk and streamed by the download
   // endpoint. They are never exposed through a static route.
   products: {

@@ -3,6 +3,7 @@ import { prisma } from "../db.js";
 import { audit } from "../lib/audit.js";
 import { requestContext } from "../lib/analytics.js";
 import { notFound, parseBody, route } from "../lib/http.js";
+import { turnstileRequired, verifyTurnstile } from "../lib/turnstile.js";
 import { requireAuth } from "../middleware/auth.js";
 import { reviewLimiter } from "../middleware/limits.js";
 import { reviewPatchSchema, reviewSchema } from "../schemas/index.js";
@@ -65,7 +66,9 @@ reviewsRouter.get("/", route(async (req, res) => {
 // Anonymous submission: the public site has no accounts, so reviews land in
 // moderation and only become visible once an admin approves them.
 reviewsRouter.post("/", reviewLimiter, route(async (req, res) => {
-  const input = parseBody(reviewSchema, req.body);
+  if (turnstileRequired("reviews")) await verifyTurnstile(req.body?.turnstileToken, req);
+  // The challenge token is not part of the review itself.
+  const { turnstileToken: _token, ...input } = parseBody(reviewSchema, req.body);
   const product = await prisma.product.findUnique({ where: { id: input.productId } });
   if (!product || product.status !== "published") throw notFound("Product not found");
 

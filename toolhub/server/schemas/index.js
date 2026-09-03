@@ -6,9 +6,12 @@ const url = z.string().trim().max(600).refine(
   { message: "Must be an http(s) URL" }
 );
 
+// `turnstileToken` is verified before validation runs, so it is only allowed
+// through here rather than being re-checked.
 export const loginSchema = z.object({
   email: z.string().trim().email().max(200),
-  password: z.string().min(8).max(200)
+  password: z.string().min(8).max(200),
+  turnstileToken: z.string().max(4000).optional()
 });
 
 export const changePasswordSchema = z.object({
@@ -115,6 +118,7 @@ export const pageSchema = z.object({
 });
 
 export const reviewSchema = z.object({
+  turnstileToken: z.string().max(4000).optional(),
   productId: z.string().uuid(),
   authorName: trimmed(60).min(2),
   rating: z.coerce.number().int().min(1).max(5),

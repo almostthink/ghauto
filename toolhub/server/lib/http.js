@@ -5,6 +5,10 @@ export class HttpError extends Error {
     super(message);
     this.status = status;
     this.details = details;
+    // Errors raised on purpose carry a message meant for the caller, even at
+    // 5xx. Anything else stays opaque so an unexpected crash cannot leak
+    // internals through the response.
+    this.expose = true;
   }
 }
 

@@ -32,7 +32,7 @@ export function useSession() {
 export function useLogin() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (body: { email: string; password: string }) =>
+    mutationFn: (body: { email: string; password: string; turnstileToken?: string }) =>
       api<{ user: AdminUser }>("/auth/login", { method: "POST", body }),
     onSuccess: () => client.invalidateQueries({ queryKey: ["session"] })
   });

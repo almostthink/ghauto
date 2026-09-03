@@ -25,17 +25,23 @@ const app = express();
 app.set("trust proxy", 1);
 app.disable("x-powered-by");
 
+// Turnstile serves its widget from challenges.cloudflare.com; nothing else is
+// added to the policy when the challenge is switched off.
+const turnstileOrigin = "https://challenges.cloudflare.com";
+const turnstileCsp = env.turnstile.enabled ? [turnstileOrigin] : [];
+
 app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'"],
+        scriptSrc: ["'self'", ...turnstileCsp],
+        frameSrc: ["'self'", ...turnstileCsp],
+        connectSrc: ["'self'", ...turnstileCsp],
         // Inline styles are used for chart bars and accent colours.
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "https:"],
-        connectSrc: ["'self'"],
         frameAncestors: ["'none'"],
         objectSrc: ["'none'"],
         baseUri: ["'self'"]
@@ -75,6 +81,20 @@ app.get("/api/health", async (_req, res) => {
   } catch {
     res.status(503).json({ status: "degraded", database: "down" });
   }
+});
+
+// What the client needs to know about server-side switches before rendering
+// its forms. Only the public site key is exposed, never the secret.
+app.get("/api/config", (_req, res) => {
+  res.json({
+    adminPath: env.adminPath,
+    turnstile: {
+      enabled: env.turnstile.enabled,
+      siteKey: env.turnstile.siteKey,
+      reviews: env.turnstile.enabled && env.turnstile.protectReviews,
+      login: env.turnstile.enabled && env.turnstile.protectLogin
+    }
+  });
 });
 
 app.use("/api", apiLimiter);
@@ -220,8 +240,9 @@ app.get("*splat", renderIndex);
 app.use((error, _req, res, _next) => {
   const status = error.status ?? 500;
   if (status >= 500) console.error(error);
+  const safeToShow = error.expose === true || status < 500;
   res.status(status).json({
-    error: status >= 500 ? "Internal server error" : error.message,
+    error: safeToShow ? error.message : "Internal server error",
     ...(error.details ? { details: error.details } : {})
   });
 });

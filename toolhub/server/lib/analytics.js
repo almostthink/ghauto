@@ -21,7 +21,18 @@ export function hashIp(ip) {
   return crypto.createHash("sha256").update(`${currentSalt()}:${ip}`).digest("hex").slice(0, 32);
 }
 
+// The address rate limits and unique-visitor counts are keyed on.
+// Behind Cloudflare, CF-Connecting-IP is the only header the edge sets itself
+// and cannot be influenced by the visitor, so it wins when TRUST_CLOUDFLARE is
+// on. Without that flag the header is ignored: at an origin reachable from the
+// open internet, anyone could send it.
 export function clientIp(req) {
+  if (env.trustCloudflare) {
+    const edge = req.headers["cf-connecting-ip"];
+    if (typeof edge === "string" && edge.trim()) return edge.trim();
+  }
+  const real = req.headers["x-real-ip"];
+  if (typeof real === "string" && real.trim()) return real.trim();
   const forwarded = req.headers["x-forwarded-for"];
   if (typeof forwarded === "string" && forwarded.length) return forwarded.split(",")[0].trim();
   return req.socket?.remoteAddress || "";
