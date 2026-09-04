@@ -86,12 +86,20 @@ function HeroBlock({ data }: { data: Data }) {
           {image ? (
             <img className="hero-image" src={image} alt="" />
           ) : (
-            // The four platforms the catalog covers, on the faces of the cube.
-            <div className="cube">
-              <span className="cube-face windows"><WindowsMark size={34} /></span>
-              <span className="cube-face game"><GamepadMark size={34} /></span>
-              <span className="cube-face crypto"><EthereumMark size={34} /></span>
-              <span className="cube-face roblox"><RobloxMark size={34} /></span>
+            // A real 3D box: the front face carries the four platforms, and the
+            // top and side faces catch the light, over a perspective floor.
+            <div className="cube-scene">
+              <div className="cube-floor" />
+              <div className="cube3d">
+                <div className="cube-face cube-front">
+                  <span className="tile windows"><WindowsMark size={38} /></span>
+                  <span className="tile game"><GamepadMark size={38} /></span>
+                  <span className="tile crypto"><EthereumMark size={38} /></span>
+                  <span className="tile roblox"><RobloxMark size={38} /></span>
+                </div>
+                <div className="cube-face cube-top" />
+                <div className="cube-face cube-side" />
+              </div>
             </div>
           )}
         </div>

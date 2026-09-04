@@ -5,6 +5,7 @@ import {
   Package, Settings, Star, X
 } from "lucide-react";
 import type { ReactNode } from "react";
+import { LogoMark } from "../components/BrandIcons";
 import { adminUrl } from "../lib/config";
 import { useAuth, useLogout } from "./auth";
 
@@ -43,7 +44,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
     <div className="admin-shell">
       <aside className={menuOpen ? "admin-sidebar open" : "admin-sidebar"}>
         <div className="brand admin-brand">
-          <span className="brand-mark">◆</span>
+          <span className="brand-mark"><LogoMark size={18} /></span>
           <span>Tool<span>Hub</span></span>
         </div>
 

@@ -500,3 +500,202 @@
   .hero-actions{gap:8px}
   .hero-actions .btn{height:44px;padding:0 16px;font-size:12px;white-space:nowrap;flex:1;justify-content:center}
 }
+
+/* ==========================================================================
+   Contrast pass: surfaces were too close to the page background, so cards
+   dissolved into it. Plus fixes for icon tiles flattened by broad descendant
+   selectors elsewhere in this file.
+   ========================================================================== */
+
+:root{
+  --bg:#06080f;
+  --surface:#121a2b;
+  --surface-hi:#182238;
+  --line:#232f47;
+  --line-soft:#1a2436;
+}
+
+body{background:radial-gradient(circle at 74% -12%,#43248a2e,transparent 38%),var(--bg)}
+
+/* --- Icon tiles: keep the glyph centred no matter what else matches ------ */
+.footer-grid .brand-mark,
+.footer-grid .social-row .social-chip,
+.stats-grid .stat-tile .stat-icon,
+.newsletter-panel .newsletter-icon,
+.topbar .brand-mark{display:grid;place-items:center}
+/* The label rule below used to hit the icon tile too. */
+.stat-tile > div span{display:block}
+
+/* --- Surfaces ------------------------------------------------------------ */
+.topbar{background:#080c15f2;border-bottom:1px solid var(--line-soft)}
+.section.alt{background:#080d17;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft)}
+
+.category-card,
+.product-card,
+.product-row,
+.panel,
+.cta-panel,
+.newsletter-panel,
+.status-card,
+.stats-grid,
+.faq,
+.product-hero-card,
+.about-hero{
+  background:linear-gradient(158deg,var(--surface) 0%,#0d1422 100%);
+  border:1px solid var(--line);
+  box-shadow:0 14px 34px #00000059;
+}
+
+.category-card:hover,
+.product-card:hover,
+.product-row:hover{
+  background:linear-gradient(158deg,var(--surface-hi) 0%,#101a2c 100%);
+  border-color:#7e52db77;
+  box-shadow:0 18px 42px #00000073,0 0 0 1px #7e52db22;
+  transform:translateY(-3px);
+}
+.product-card,.product-row{transition:.18s}
+
+.searchbox,.filterbar select,.chip,.newsletter input,.wide-newsletter input{
+  background:#0d1526;border-color:var(--line)
+}
+.chip{color:#93a1b5}
+.chip.active{background:#8b5cf626;border-color:#8b5cf677;color:#d7c6ff}
+.faq-item{background:transparent}
+.faq-item:not(:last-child){border-bottom:1px solid var(--line-soft)}
+.product-logo{border:1px solid #ffffff14;background:#182339}
+.category-chip{background:#8b5cf61f;border-color:#8b5cf644}
+.stat-icon{background:#8b5cf61f}
+
+/* Section rhythm: a visible seam between blocks instead of one flat field. */
+.section{padding:64px 0}
+.section-head{margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid var(--line-soft)}
+.section-head h2{font-size:26px}
+
+/* --- 3D cube ------------------------------------------------------------- */
+.hero-art{perspective:1100px}
+.cube-scene{position:relative;width:340px;height:340px;display:grid;place-items:center;transform-style:preserve-3d}
+
+/* Perspective floor under the box. */
+.cube-floor{
+  position:absolute;bottom:6px;left:50%;width:520px;height:230px;transform:translateX(-50%) rotateX(74deg);
+  background:
+    repeating-linear-gradient(90deg,#8b5cf62e 0 1px,transparent 1px 44px),
+    repeating-linear-gradient(0deg,#8b5cf62e 0 1px,transparent 1px 44px);
+  -webkit-mask-image:radial-gradient(ellipse at center,#000 12%,transparent 68%);
+  mask-image:radial-gradient(ellipse at center,#000 12%,transparent 68%);
+  pointer-events:none;
+}
+
+.cube3d{
+  position:relative;width:230px;height:230px;transform-style:preserve-3d;
+  transform:rotateX(-14deg) rotateY(-26deg);
+  animation:cube-drift 9s ease-in-out infinite alternate;
+}
+@keyframes cube-drift{
+  from{transform:rotateX(-14deg) rotateY(-26deg) translateY(-5px)}
+  to{transform:rotateX(-10deg) rotateY(-20deg) translateY(5px)}
+}
+@media(prefers-reduced-motion:reduce){.cube3d{animation:none}}
+
+/* Box of W=H=230, D=116. Every face is centred first, then rotated and pushed
+   out by half of the axis it faces; positioning faces from an edge instead
+   puts them off the box. */
+.cube3d .cube-face{position:absolute;left:50%;top:50%;border-radius:24px}
+.cube-front{
+  width:230px;height:230px;
+  transform:translate(-50%,-50%) translateZ(58px);
+  display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:22px;
+  background:linear-gradient(150deg,#1f2a46,#0b111e 74%);
+  border:1px solid #8b5cf666;
+  box-shadow:inset 0 1px 0 #ffffff1a,0 0 70px #6e39d666;
+}
+.cube-top{
+  width:230px;height:116px;
+  transform:translate(-50%,-50%) rotateX(90deg) translateZ(115px);
+  background:linear-gradient(180deg,#31406a,#151f36);border:1px solid #8b5cf64d;
+}
+.cube-side{
+  width:116px;height:230px;
+  transform:translate(-50%,-50%) rotateY(90deg) translateZ(115px);
+  background:linear-gradient(90deg,#1a2338,#0a0f1a);border:1px solid #8b5cf63d;
+}
+.cube-front .tile{
+  display:grid;place-items:center;border-radius:18px;background:#0f1727cc;border:1px solid #ffffff14;
+  box-shadow:inset 0 1px 0 #ffffff12;
+}
+.cube-front .tile.windows{color:#4da3ff;text-shadow:0 0 18px #4da3ff66}
+.cube-front .tile.game{color:#b98cff;text-shadow:0 0 18px #b98cff66}
+.cube-front .tile.crypto{color:#9d7bff;text-shadow:0 0 18px #9d7bff66}
+.cube-front .tile.roblox{color:#eef2ff;text-shadow:0 0 18px #ffffff4d}
+.cube-front .tile svg{filter:drop-shadow(0 0 10px currentColor)}
+
+.o1{width:280px;height:280px;background:#7135ee3d;left:16%;top:12%}
+.o2{width:170px;height:170px;background:#5ee7ff1a;right:2%;bottom:8%}
+
+@media(max-width:700px){
+  .cube-scene{width:260px;height:260px}
+  .cube3d{width:180px;height:180px}
+  .cube-front{width:180px;height:180px;padding:15px;gap:10px;border-radius:20px;
+    transform:translate(-50%,-50%) translateZ(45px)}
+  .cube-top{width:180px;height:90px;transform:translate(-50%,-50%) rotateX(90deg) translateZ(90px)}
+  .cube-side{width:90px;height:180px;transform:translate(-50%,-50%) rotateY(90deg) translateZ(90px)}
+  .cube-floor{width:340px;height:170px}
+  .section{padding:44px 0}
+}
+
+/* `.footer-grid .brand span` (two classes + element) outranks a two-class
+   selector, so the footer mark needs one more class to win. */
+.footer-grid .brand .brand-mark{display:grid;place-items:center}
+
+/* Cube scene, second pass: bigger box, a floor grid you can actually see and
+   a stronger ambient glow, closer to the reference artwork. */
+.hero-art{height:440px}
+.cube-scene{width:400px;height:400px}
+.cube3d{width:262px;height:262px}
+.cube-front{width:262px;height:262px;transform:translate(-50%,-50%) translateZ(66px);padding:26px;gap:16px}
+.cube-top{width:262px;height:132px;transform:translate(-50%,-50%) rotateX(90deg) translateZ(131px)}
+.cube-side{width:132px;height:262px;transform:translate(-50%,-50%) rotateY(90deg) translateZ(131px)}
+
+.cube-floor{
+  bottom:-10px;width:620px;height:300px;
+  background:
+    repeating-linear-gradient(90deg,#a37bff59 0 1px,transparent 1px 46px),
+    repeating-linear-gradient(0deg,#a37bff59 0 1px,transparent 1px 46px);
+  -webkit-mask-image:radial-gradient(ellipse at center,#000 8%,transparent 62%);
+  mask-image:radial-gradient(ellipse at center,#000 8%,transparent 62%);
+}
+
+/* Ambient light pooling under and behind the box. */
+.cube-scene::before{
+  content:"";position:absolute;width:340px;height:340px;border-radius:50%;
+  background:radial-gradient(circle,#7b3ff24d,transparent 68%);filter:blur(26px);
+}
+.cube-scene::after{
+  content:"";position:absolute;bottom:34px;width:250px;height:44px;border-radius:50%;
+  background:radial-gradient(ellipse,#7b3ff266,transparent 70%);filter:blur(16px);
+}
+.cube3d{position:relative;z-index:1}
+
+.cube-front .tile{background:#111a2ce6;border-color:#ffffff1f}
+.cube-front .tile svg{filter:drop-shadow(0 0 14px currentColor)}
+.o1{width:320px;height:320px;background:#7135ee47}
+
+@media(max-width:900px){
+  .hero-art{height:360px}
+  .cube-scene{width:320px;height:320px}
+}
+@media(max-width:700px){
+  .hero-art{height:300px}
+  .cube-scene{width:270px;height:270px}
+  .cube3d{width:186px;height:186px}
+  .cube-front{width:186px;height:186px;padding:16px;gap:11px;transform:translate(-50%,-50%) translateZ(47px)}
+  .cube-top{width:186px;height:94px;transform:translate(-50%,-50%) rotateX(90deg) translateZ(93px)}
+  .cube-side{width:94px;height:186px;transform:translate(-50%,-50%) rotateY(90deg) translateZ(93px)}
+  .cube-floor{width:380px;height:200px}
+  .cube-scene::before{width:230px;height:230px}
+}
+
+/* Equal card heights in a row, whatever the name length. */
+.product-grid{align-items:stretch}
+.product-card{height:100%}
