@@ -18,7 +18,13 @@ interface RequestOptions {
   method?: string;
   body?: unknown;
   signal?: AbortSignal;
+  /** Overrides the default guard; uploads pass their own longer budget. */
+  timeoutMs?: number;
 }
+
+// Without this a request that never comes back (proxy hiccup, restart mid-save)
+// leaves the panel spinning forever with nothing to click.
+const DEFAULT_TIMEOUT_MS = 30000;
 
 export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const method = options.method ?? "GET";
@@ -27,18 +33,50 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
   // Echoes the readable CSRF cookie back as a header; a cross-site form cannot.
   if (method !== "GET") headers["x-csrf-token"] = csrfToken();
 
-  const response = await fetch(`/api${path}`, {
-    method,
-    headers,
-    credentials: "same-origin",
-    signal: options.signal,
-    body: options.body === undefined ? undefined : JSON.stringify(options.body)
-  });
+  const controller = new AbortController();
+  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const timer = window.setTimeout(() => controller.abort(new Error("timeout")), timeoutMs);
+  if (options.signal) {
+    if (options.signal.aborted) controller.abort(options.signal.reason);
+    else options.signal.addEventListener("abort", () => controller.abort(options.signal?.reason), { once: true });
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(`/api${path}`, {
+      method,
+      headers,
+      credentials: "same-origin",
+      signal: controller.signal,
+      body: options.body === undefined ? undefined : JSON.stringify(options.body)
+    });
+  } catch (networkError) {
+    if (options.signal?.aborted) throw networkError;
+    if (controller.signal.aborted) {
+      throw new ApiError(0, `The server did not answer within ${Math.round(timeoutMs / 1000)}s. Nothing was saved, try again.`);
+    }
+    throw new ApiError(0, "No connection to the server. Check the network and try again.");
+  } finally {
+    window.clearTimeout(timer);
+  }
 
   if (response.status === 204) return undefined as T;
 
   const text = await response.text();
-  const payload = text ? (JSON.parse(text) as Record<string, unknown>) : {};
+  let payload: Record<string, unknown> = {};
+  if (text) {
+    try {
+      payload = JSON.parse(text) as Record<string, unknown>;
+    } catch {
+      // A proxy or a bot check answered with an HTML page instead of the API.
+      throw new ApiError(
+        response.status,
+        response.ok
+          ? "The server sent an unexpected answer. Reload the page and try again."
+          : `Request failed (${response.status}). The answer came from a proxy, not from the panel.`
+      );
+    }
+  }
 
   if (!response.ok) {
     const details = payload.details as { path: string; message: string }[] | undefined;

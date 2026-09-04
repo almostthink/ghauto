@@ -167,7 +167,28 @@ export function ProductEditor() {
     [categories, values.categoryId]
   );
 
+  // Which tab owns each field that can fail validation, so a failed save can
+  // point at it instead of leaving the button looking dead.
+  const TAB_OF_FIELD: Partial<Record<keyof FormValues, Tab>> = {
+    name: "General",
+    categoryId: "General"
+  };
+
   const onSubmit = handleSubmit(async (formValues) => {
+    // Leaving the General tab unmounts its inputs, and with them the rules the
+    // form would have checked, so the required fields are verified here too.
+    // Otherwise an empty category reached the server as "Invalid uuid".
+    const required: { field: keyof FormValues; tab: Tab; message: string }[] = [
+      { field: "name", tab: "General", message: "A name is required" },
+      { field: "categoryId", tab: "General", message: "Pick a category" }
+    ];
+    const missing = required.find((rule) => !String(formValues[rule.field] ?? "").trim());
+    if (missing) {
+      setTab(missing.tab);
+      toast(`${missing.message} (${missing.tab} tab)`, "error");
+      return;
+    }
+
     const payload = {
       ...formValues,
       subcategoryId: formValues.subcategoryId || null,
@@ -192,6 +213,13 @@ export function ProductEditor() {
     } catch (saveError) {
       toast(saveError instanceof Error ? saveError.message : "Save failed", "error");
     }
+  }, (fieldErrors) => {
+    const [field, fieldError] = Object.entries(fieldErrors)[0] ?? [];
+    if (!field) return;
+    const target = TAB_OF_FIELD[field as keyof FormValues];
+    if (target) setTab(target);
+    const message = (fieldError as { message?: string } | undefined)?.message;
+    toast(message ? `${message} (${target ?? "form"} tab)` : "Fill in the required fields", "error");
   });
 
   if (!isNew && isLoading) return <div className="dashboard"><Skeleton height={320} /></div>;
