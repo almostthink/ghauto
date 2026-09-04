@@ -546,7 +546,117 @@ export const CATALOG = [
     long: "Every approval a wallet signs stays live until revoked, and stale approvals are how a large share of drains happen. Revoke.cash lists what each address has approved across chains and lets you cancel any of them from one page.",
     features: ["Approvals across many chains", "Revoke in a few clicks", "Works with hardware wallets", "Read-only inspection of any address", "Open source"],
     requirements: ["Any modern browser", "Wallet connection to revoke"]
+  },
+  // --------------------------------------------------- Game, per title
+  {
+    name: "OpenIV", category: "game", sub: "Mods", price: "Free",
+    site: "openiv.com", version: "4.1", size: "42 MB", rating: 4.7, downloads: 68400,
+    tags: ["gta", "modding", "editor"],
+    short: "Archive editor and mod installer for GTA V and GTA IV.",
+    long: "OpenIV opens the game's own archives so textures, models, vehicles and scripts can be replaced, and installs mods into a separate mods folder that leaves the original files untouched. It is the foundation most GTA V single-player modding builds on. Rockstar bans modified clients in GTA Online, so keep it to single player.",
+    features: ["Reads and edits RPF game archives", "mods folder keeps original files intact", "Texture, model and script editing", "Package installer for mod archives", "GTA V, GTA IV and Max Payne 3"],
+    requirements: ["Windows 10 or 11", "A legal copy of the game", "Single player only"]
+  },
+  {
+    name: "Script Hook V", category: "game", sub: "Mods", price: "Free",
+    site: "dev-c.com", version: "1.0.3570.1", size: "2 MB", rating: 4.6, downloads: 74200,
+    tags: ["gta", "modding", "scripting"],
+    short: "Runs custom .asi scripts in GTA V single player.",
+    long: "Script Hook V exposes the game's native functions to custom scripts, which is what almost every GTA V single-player mod is built on. It ships with a trainer for testing. It disables itself in GTA Online, and Rockstar bans modified clients there.",
+    features: ["Native function access for .asi scripts", "Bundled single-player trainer", "Required by most GTA V mods", "Updated for each game patch", "Disabled in online mode"],
+    requirements: ["Windows 10 or 11", "GTA V for PC", "Single player only"]
+  },
+  {
+    name: "FiveM", category: "game", sub: "Utilities", price: "Free",
+    site: "fivem.net", version: "1.0", size: "180 MB", rating: 4.5, downloads: 96700,
+    tags: ["gta", "multiplayer", "roleplay"],
+    short: "Community multiplayer platform for GTA V, run by Cfx.re.",
+    long: "FiveM runs its own servers, separate from GTA Online, where communities build roleplay and custom game modes with their own scripts and assets. It is operated by Cfx.re, which Rockstar acquired in 2023, so it is a sanctioned way to play modified multiplayer.",
+    features: ["Custom servers separate from GTA Online", "Roleplay and custom game modes", "Server-side scripting and assets", "Built-in server browser", "Operated by Cfx.re under Rockstar"],
+    requirements: ["Windows 10 or 11", "A legal copy of GTA V", "Rockstar Games account"]
+  },
+  {
+    name: "CS Demo Manager", category: "game", sub: "Utilities", price: "Free",
+    site: "cs-demo-manager.com", version: "3.6", size: "210 MB", rating: 4.7, downloads: 31800,
+    tags: ["cs2", "demos", "open source"],
+    short: "Analyses Counter-Strike demos: rounds, duels, heatmaps and stats.",
+    long: "CS Demo Manager parses CS2 and CS:GO demos into readable statistics: per-round economy, duels, utility damage, weapon accuracy and 2D playback with heatmaps. Sequences can be exported to video for review clips, and matches are searchable across your whole demo library.",
+    features: ["Round, duel and utility statistics", "2D playback with heatmaps", "Export sequences to video", "Match and player search across a demo library", "Open source"],
+    requirements: ["Windows 10 or 11, macOS or Linux", "Counter-Strike installed for playback"]
+  },
+  {
+    name: "Half-Life Advanced Effects", category: "game", sub: "Recording", price: "Free",
+    site: "advancedfx.org", version: "2.156", size: "34 MB", rating: 4.5, downloads: 18600,
+    tags: ["cs2", "recording", "open source"],
+    short: "Camera control and frame capture for Source engine movie making.",
+    long: "HLAE is the toolkit behind most Counter-Strike frag movies: smooth camera paths, free camera, depth and mask passes, and lossless frame capture for compositing. It works alongside demo playback rather than modifying the game.",
+    features: ["Free camera and camera path editor", "Lossless frame and audio capture", "Depth, mask and matte passes", "Works with demo playback", "Open source"],
+    requirements: ["Windows 10 or 11", "Counter-Strike 2 or a Source game"]
+  },
+  {
+    name: "Blitz", category: "game", sub: "Utilities", price: "Freemium",
+    site: "blitz.gg", version: "3.24", size: "160 MB", rating: 4.2, downloads: 84300,
+    tags: ["valorant", "stats", "overlay"],
+    short: "Companion app with stats, lineups and post-match review.",
+    long: "Blitz reads match history through the publisher's own interfaces and shows agent and map lineups, loadout economy and post-match breakdowns for Valorant, League of Legends and several other titles. It is a companion overlay, not a game modification.",
+    features: ["Match history and post-game analysis", "Agent, map and lineup guides", "Live overlay with round information", "Supports several titles from one app", "Free tier with no gameplay changes"],
+    requirements: ["Windows 10 or 11", "Publisher account for match history"]
+  },
+  {
+    name: "Tracker Network", category: "game", sub: "Utilities", price: "Freemium",
+    site: "tracker.gg", version: "4.2", size: "120 MB", rating: 4.3, downloads: 71500,
+    tags: ["fortnite", "stats", "overlay"],
+    short: "Match statistics and overlay for Fortnite, Apex and more.",
+    long: "The Tracker Network app records session performance across Fortnite, Apex Legends, Valorant and other titles, showing an in-game overlay with your live session and a history of matches, weapons and placements afterwards.",
+    features: ["Live session overlay", "Match history across supported titles", "Weapon and placement breakdowns", "Session goals and trends", "Reads public match data only"],
+    requirements: ["Windows 10 or 11", "Account on the supported game"]
+  },
+  {
+    name: "Prism Launcher", category: "game", sub: "Mods", price: "Free",
+    site: "prismlauncher.org", version: "9.4", size: "48 MB", rating: 4.8, downloads: 62900,
+    tags: ["minecraft", "mods", "open source"],
+    short: "Minecraft launcher that keeps every modpack in its own instance.",
+    long: "Prism Launcher runs each Minecraft setup as an isolated instance with its own mods, version and Java settings, so a modpack can never break another. It installs Fabric, Forge, Quilt and NeoForge, and imports packs from CurseForge and Modrinth directly.",
+    features: ["Isolated instances per modpack", "Fabric, Forge, Quilt and NeoForge", "CurseForge and Modrinth imports", "Per-instance Java and memory settings", "Open source, no telemetry"],
+    requirements: ["Windows 10 or 11, macOS or Linux", "A Minecraft account", "Java (installed by the launcher)"]
+  },
+  {
+    name: "Playnite", category: "game", sub: "Utilities", price: "Free",
+    site: "playnite.link", version: "10.3", size: "96 MB", rating: 4.8, downloads: 57400,
+    tags: ["library", "launchers", "open source"],
+    short: "One library for Steam, Epic, GOG, Xbox and the rest.",
+    long: "Playnite imports the libraries of every store and emulator you use into a single catalogue with artwork, playtime and metadata, and launches each game through its own client. There is a desktop mode and a fullscreen mode for a couch setup.",
+    features: ["Imports Steam, Epic, GOG, Xbox, Ubisoft and more", "Emulator library support", "Automatic metadata and artwork", "Fullscreen mode with controller support", "Extensions and themes"],
+    requirements: ["Windows 10 or 11", ".NET runtime included in the installer"]
+  },
+  {
+    name: "Borderless Gaming", category: "game", sub: "Utilities", price: "Freemium",
+    site: "github.com", version: "10.5", size: "3 MB", rating: 4.5, downloads: 39200,
+    tags: ["window", "fullscreen", "open source"],
+    short: "Turns a windowed game into borderless fullscreen.",
+    long: "Borderless Gaming strips the border and title bar from a windowed game and stretches it to the display, which gives instant alt-tab without the flicker of exclusive fullscreen. Favourites are remembered and applied automatically when a game starts.",
+    features: ["Borderless fullscreen for any window", "Automatic rules per game", "Multi-monitor aware", "No game files touched", "Open source"],
+    requirements: ["Windows 10 or 11", ".NET runtime"]
+  },
+  {
+    name: "Luau Language Server", category: "roblox", sub: "Studio", price: "Free",
+    site: "github.com", version: "1.44", size: "16 MB", rating: 4.7, downloads: 13900,
+    tags: ["luau", "vscode", "open source"],
+    short: "Autocomplete, type checking and go-to-definition for Luau in VS Code.",
+    long: "luau-lsp brings the editor features Roblox Studio has into VS Code: type checking against the Roblox API, autocomplete for instances from a sourcemap generated by Rojo, inlay hints and diagnostics as you type.",
+    features: ["Roblox API type definitions", "Sourcemap-aware instance autocomplete", "Inline diagnostics and type errors", "Go to definition and hover docs", "Open source"],
+    requirements: ["Visual Studio Code", "Rojo project for full instance awareness"]
+  },
+  {
+    name: "Hoarcekat", category: "roblox", sub: "Studio", price: "Free",
+    site: "github.com", version: "2.3", size: "2 MB", rating: 4.5, downloads: 7900,
+    tags: ["ui", "plugin", "open source"],
+    short: "Preview UI components in Studio without running the game.",
+    long: "Hoarcekat is a Studio plugin that renders UI components in isolation from a story file, so an interface can be built and reviewed without playing through to the screen that shows it. It is the Roblox equivalent of a component storybook.",
+    features: ["Renders components from story files", "No play-testing to reach a screen", "Live reload as the source changes", "Works with Roact, Fusion and plain UI", "Open source"],
+    requirements: ["Roblox Studio", "Story files in the project"]
   }
 ];
+
 
 export const attachLogos = (items) => items.map((item) => ({ ...item, logo: logo(item.site) }));

@@ -5,7 +5,8 @@ import { audit } from "../lib/audit.js";
 import { requestContext } from "../lib/analytics.js";
 import { HttpError, notFound, parseBody, parseQuery, route } from "../lib/http.js";
 import {
-  deleteStoredFile, humanSize, resolveStoredPath, safeDownloadName, saveUploadStream, statStoredFile
+  deleteStoredFile, downloadNameFor, humanSize, resolveStoredPath, safeDownloadName, saveUploadStream,
+  statStoredFile
 } from "../lib/productFiles.js";
 import { slugify, uniqueSlug } from "../lib/text.js";
 import { requireAuth } from "../middleware/auth.js";
@@ -229,7 +230,7 @@ productsRouter.get("/:id/download", downloadLimiter, route(async (req, res) => {
   }
 
   if (stored) {
-    const filename = safeDownloadName(product.fileName || `${product.slug}.bin`);
+    const filename = downloadNameFor(product);
     if (String(req.query.format) === "json") {
       return res.json({ url: `/api/products/${product.id}/download`, filename, bytes: stored.size });
     }

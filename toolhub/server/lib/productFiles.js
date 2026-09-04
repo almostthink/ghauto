@@ -28,11 +28,22 @@ export function assertAllowed(filename) {
   return extension;
 }
 
-// Keeps the original name usable in a Content-Disposition header without
-// letting it carry quotes, newlines or path separators.
+// Keeps a name usable in a Content-Disposition header without letting it carry
+// quotes, newlines or path separators.
 export function safeDownloadName(filename, fallback = "download") {
-  const base = path.basename(String(filename || "")).replace(/[^\w.\- ]+/g, "_").trim();
+  // Separators are folded first: basename() would otherwise treat a product
+  // named "Blender / LTS" as a path and keep only the last segment.
+  const flattened = String(filename || "").replace(/[\\/]+/g, "-");
+  const base = path.basename(flattened).replace(/[^\w.+\- ]+/g, "_").trim();
   return base && base !== "." ? base.slice(0, 120) : fallback;
+}
+
+// The visitor should receive the file named after the product they clicked,
+// not after whatever the file was called when it was uploaded. One archive can
+// therefore back several products and still arrive with the right name.
+export function downloadNameFor(product) {
+  const extension = extensionOf(product.fileName) || extensionOf(product.fileKey) || "zip";
+  return safeDownloadName(`${product.name}.${extension}`, `${product.slug}.${extension}`);
 }
 
 export function resolveStoredPath(key) {
