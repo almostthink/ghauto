@@ -178,6 +178,18 @@ export function useBulkProducts() {
   });
 }
 
+export function useBulkLinks() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: (body: { ids: string[]; mode: "replace" | "template"; find?: string; replace?: string; template?: string }) =>
+      api<{ affected: number; examined: number; samples: { id: string; downloadUrl: string }[] }>(
+        "/products/bulk/links",
+        { method: "POST", body }
+      ),
+    onSuccess: () => invalidate(["products", "product"])
+  });
+}
+
 export function useSaveCategory() {
   const invalidate = useInvalidate();
   return useMutation({

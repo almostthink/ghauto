@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Download, Edit3, FileDown, Plus, Search, Trash2 } from "lucide-react";
+import { Download, Edit3, FileDown, Link2, Plus, Search, Trash2, X } from "lucide-react";
 import { ConfirmDialog, EmptyState, ErrorState, Skeleton, useDebounced, useToast } from "../components/ui";
 import { adminUrl } from "../lib/config";
 import { formatCompact, formatDate } from "../lib/format";
 import { queryString } from "../lib/api";
-import { useBulkProducts, useCategories, useDeleteProduct, useProducts } from "../lib/queries";
+import { useBulkLinks, useBulkProducts, useCategories, useDeleteProduct, useProducts } from "../lib/queries";
 import { AdminPanel, PageHeading } from "./components";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -24,6 +24,7 @@ export function ProductsList() {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<string[]>([]);
   const [confirm, setConfirm] = useState<{ ids: string[]; single?: string } | null>(null);
+  const [linksOpen, setLinksOpen] = useState(false);
   const debounced = useDebounced(term, 250);
 
   const filters = {
@@ -115,6 +116,9 @@ export function ProductsList() {
             <button type="button" className="btn ghost small" onClick={() => runBulk("feature")}>Feature</button>
             <button type="button" className="btn ghost small" onClick={() => runBulk("unfeature")}>Unfeature</button>
             <button type="button" className="btn ghost small" onClick={() => runBulk("archive")}>Archive</button>
+            <button type="button" className="btn ghost small" onClick={() => setLinksOpen(true)}>
+              <Link2 size={13} /> Download links
+            </button>
             <button type="button" className="btn danger small" onClick={() => setConfirm({ ids: selected })}>
               <Trash2 size={13} /> Delete
             </button>
@@ -203,6 +207,10 @@ export function ProductsList() {
         ) : null}
       </AdminPanel>
 
+      {linksOpen ? (
+        <BulkLinksDialog ids={selected} onClose={() => setLinksOpen(false)} />
+      ) : null}
+
       {confirm ? (
         <ConfirmDialog
           title={confirm.single ? "Delete this product?" : `Delete ${confirm.ids.length} products?`}
@@ -214,6 +222,95 @@ export function ProductsList() {
           onCancel={() => setConfirm(null)}
         />
       ) : null}
+    </div>
+  );
+}
+
+// Rewrites the download link on every selected product in one pass, either by
+// substituting part of the current URL or by rebuilding it from a template.
+function BulkLinksDialog({ ids, onClose }: { ids: string[]; onClose: () => void }) {
+  const bulk = useBulkLinks();
+  const toast = useToast();
+  const [mode, setMode] = useState<"replace" | "template">("replace");
+  const [find, setFind] = useState("");
+  const [replace, setReplace] = useState("");
+  const [template, setTemplate] = useState("https://cattools.cc/files/{slug}.exe");
+
+  const submit = async () => {
+    try {
+      const result = await bulk.mutateAsync(
+        mode === "replace" ? { ids, mode, find, replace } : { ids, mode, template }
+      );
+      toast(
+        result.affected
+          ? `${result.affected} of ${result.examined} links updated`
+          : "Nothing matched, no link was changed"
+      );
+      if (result.affected) onClose();
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Could not update the links", "error");
+    }
+  };
+
+  return (
+    <div className="modal-backdrop" onClick={onClose} role="presentation">
+      <div className="modal" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true">
+        <div className="modal-head">
+          <div>
+            <span className="eyebrow">BULK EDIT</span>
+            <h2>Download links for {ids.length} product{ids.length === 1 ? "" : "s"}</h2>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close"><X /></button>
+        </div>
+
+        <div className="chips">
+          <button type="button" className={mode === "replace" ? "chip active" : "chip"} onClick={() => setMode("replace")}>
+            Find and replace
+          </button>
+          <button type="button" className={mode === "template" ? "chip active" : "chip"} onClick={() => setMode("template")}>
+            Rebuild from a template
+          </button>
+        </div>
+
+        {mode === "replace" ? (
+          <div className="form-grid">
+            <label className="wide">
+              Find in the current link
+              <input value={find} onChange={(event) => setFind(event.target.value)} placeholder="https://old-host.com" />
+            </label>
+            <label className="wide">
+              Replace with
+              <input value={replace} onChange={(event) => setReplace(event.target.value)} placeholder="https://cattools.cc/files" />
+            </label>
+            <p className="form-note wide">
+              Products whose link does not contain the search text are left untouched.
+            </p>
+          </div>
+        ) : (
+          <div className="form-grid">
+            <label className="wide">
+              New link
+              <input value={template} onChange={(event) => setTemplate(event.target.value)} />
+            </label>
+            <p className="form-note wide">
+              Placeholders: <code>{"{slug}"}</code>, <code>{"{name}"}</code>, <code>{"{version}"}</code>,{" "}
+              <code>{"{category}"}</code>. Every selected product gets its link rebuilt, replacing what is there now.
+            </p>
+          </div>
+        )}
+
+        <div className="modal-actions">
+          <button type="button" className="btn ghost" onClick={onClose}>Cancel</button>
+          <button
+            type="button"
+            className="btn primary"
+            onClick={submit}
+            disabled={bulk.isPending || (mode === "replace" ? !find : !template)}
+          >
+            Update links
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

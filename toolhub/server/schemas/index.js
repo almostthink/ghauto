@@ -47,10 +47,9 @@ export const productSchema = z.object({
   longDescription: trimmed(20000).default(""),
   categoryId: z.string().uuid(),
   subcategoryId: z.string().uuid().nullable().optional(),
-  rating: z.coerce.number().min(0).max(5).default(0),
-  reviewCount: z.coerce.number().int().min(0).default(0),
-  downloads: z.coerce.number().int().min(0).default(0),
-  views: z.coerce.number().int().min(0).default(0),
+  // rating, reviewCount, downloads and views are deliberately absent: they are
+  // derived from approved reviews and from real download and view events, so
+  // the API ignores anything a client sends for them.
   version: trimmed(40).default("1.0.0"),
   fileSize: trimmed(40).default(""),
   license: trimmed(60).default("Free"),
@@ -81,6 +80,20 @@ export const bulkProductSchema = z.object({
   ids: z.array(z.string().uuid()).min(1).max(200),
   action: z.enum(["publish", "unpublish", "archive", "delete", "feature", "unfeature"])
 });
+
+// Bulk edit of download links: either substitute text inside the current URL
+// or rebuild it from a template.
+export const bulkLinksSchema = z
+  .object({
+    ids: z.array(z.string().uuid()).min(1).max(500),
+    mode: z.enum(["replace", "template"]),
+    find: trimmed(300).optional(),
+    replace: trimmed(600).optional(),
+    template: trimmed(600).optional()
+  })
+  .refine((value) => (value.mode === "replace" ? Boolean(value.find) : Boolean(value.template)), {
+    message: "`find` is required to replace, `template` is required to rebuild"
+  });
 
 export const categorySchema = z.object({
   name: trimmed(80).min(2),

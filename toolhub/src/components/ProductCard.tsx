@@ -47,7 +47,7 @@ export function ProductCard({ product, showDownloads = true }: { product: Produc
       <div className="rating">
         <Star size={14} fill="currentColor" />
         <b>{product.rating ? product.rating.toFixed(1) : "New"}</b>
-        <span>({formatCompact(product.reviewCount)})</span>
+        {product.reviewCount > 0 ? <span>({formatCompact(product.reviewCount)})</span> : null}
       </div>
 
       {showDownloads ? (
@@ -77,7 +77,7 @@ export function ProductRow({ product, showDownloads = true }: { product: Product
       <div className="row-rating">
         <Star size={13} fill="currentColor" />
         <b>{product.rating ? product.rating.toFixed(1) : "New"}</b>
-        <span>({formatCompact(product.reviewCount)})</span>
+        {product.reviewCount > 0 ? <span>({formatCompact(product.reviewCount)})</span> : null}
       </div>
       {showDownloads ? (
         <div className="row-downloads"><Download size={13} />{formatCompact(product.downloads)}</div>

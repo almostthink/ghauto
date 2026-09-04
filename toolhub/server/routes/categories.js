@@ -25,7 +25,10 @@ const serialize = (category) => ({
     id: child.id,
     slug: child.slug,
     name: child.name,
-    productCount: child._count?.products ?? 0
+    // A product names a parent category and, optionally, a subcategory. For a
+    // child the products are the ones pointing at it as their subcategory,
+    // which is the subProducts relation, not products.
+    productCount: (child._count?.subProducts ?? 0) + (child._count?.products ?? 0)
   }))
 });
 
@@ -38,7 +41,7 @@ categoriesRouter.get("/", route(async (req, res) => {
       children: {
         where: includeHidden ? {} : { visible: true },
         orderBy: { position: "asc" },
-        include: { _count: { select: { products: true } } }
+        include: { _count: { select: { products: true, subProducts: true } } }
       }
     },
     orderBy: { position: "asc" }
@@ -51,7 +54,7 @@ categoriesRouter.get("/:idOrSlug", route(async (req, res) => {
     where: { OR: [{ slug: req.params.idOrSlug }, { id: req.params.idOrSlug }] },
     include: {
       _count: { select: { products: true } },
-      children: { orderBy: { position: "asc" }, include: { _count: { select: { products: true } } } }
+      children: { orderBy: { position: "asc" }, include: { _count: { select: { products: true, subProducts: true } } } }
     }
   });
   if (!category) throw notFound("Category not found");

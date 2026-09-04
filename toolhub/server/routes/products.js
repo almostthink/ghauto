@@ -10,7 +10,9 @@ import {
 import { slugify, uniqueSlug } from "../lib/text.js";
 import { requireAuth } from "../middleware/auth.js";
 import { downloadLimiter } from "../middleware/limits.js";
-import { bulkProductSchema, productPatchSchema, productQuerySchema, productSchema } from "../schemas/index.js";
+import {
+  bulkLinksSchema, bulkProductSchema, productPatchSchema, productQuerySchema, productSchema
+} from "../schemas/index.js";
 
 export const productsRouter = express.Router();
 
@@ -406,6 +408,43 @@ productsRouter.post("/bulk", requireAuth, route(async (req, res) => {
   const result = await prisma.product.updateMany({ where: { id: { in: ids } }, data: updates[action] });
   await audit(req, `product.bulk_${action}`, "product", "", { count: result.count });
   res.json({ affected: result.count });
+}));
+
+// Rewrites the download link on many products at once: either a find and
+// replace inside the existing URL, or a template rebuilt from product fields.
+productsRouter.post("/bulk/links", requireAuth, route(async (req, res) => {
+  const { ids, mode, find, replace, template } = parseBody(bulkLinksSchema, req.body);
+  const products = await prisma.product.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, slug: true, name: true, version: true, downloadUrl: true, category: { select: { slug: true } } }
+  });
+
+  const changes = [];
+  for (const product of products) {
+    const next =
+      mode === "replace"
+        ? product.downloadUrl.split(find).join(replace ?? "")
+        // Substituted values are URL encoded: a version like "4.5 LTS" would
+        // otherwise put a space in the link.
+        : template
+            .replaceAll("{slug}", encodeURIComponent(product.slug))
+            .replaceAll("{name}", encodeURIComponent(product.name))
+            .replaceAll("{version}", encodeURIComponent(product.version))
+            .replaceAll("{category}", encodeURIComponent(product.category?.slug ?? ""));
+    if (next !== product.downloadUrl) changes.push({ id: product.id, downloadUrl: next.slice(0, 600) });
+  }
+
+  // Nothing is written when the pattern matched nothing, so a mistyped search
+  // cannot quietly blank out a batch of links.
+  if (changes.length) {
+    await prisma.$transaction(
+      changes.map((change) =>
+        prisma.product.update({ where: { id: change.id }, data: { downloadUrl: change.downloadUrl } })
+      )
+    );
+  }
+  await audit(req, "product.bulk_links", "product", "", { mode, affected: changes.length });
+  res.json({ affected: changes.length, examined: products.length, samples: changes.slice(0, 3) });
 }));
 
 // CSV export of the current admin filter selection.

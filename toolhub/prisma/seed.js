@@ -2,116 +2,31 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { env } from "../server/env.js";
 import { COUNTRIES } from "../server/lib/countries.js";
+import { CATALOG, attachLogos } from "./catalog.js";
+
+// Entries from the first placeholder catalog. They were never real products,
+// so a seed run clears them out rather than leaving them beside the real ones.
+const PLACEHOLDER_SLUGS = [
+  "winoptimizer-26", "malwarebytes", "driver-booster-pro", "fps-overlay-studio",
+  "clipforge-recorder", "roblox-studio-companion", "asset-pack-manager",
+  "exodus-wallet", "chainwatch-analytics", "ledger-live"
+];
 
 const prisma = new PrismaClient();
 
 const CATEGORIES = [
   { slug: "windows", name: "Windows Tools", icon: "windows", accent: "#4da3ff", position: 0,
     description: "System utilities, optimization and productivity software for Windows.",
-    children: ["Optimization", "Security", "Drivers"] },
+    children: ["Optimization", "Security", "Drivers", "Utilities"] },
   { slug: "game", name: "Game Tools", icon: "gamepad", accent: "#b98cff", position: 1,
     description: "Utilities that improve how you play, record and tune your games.",
-    children: ["Trainers", "Overlays", "Recording"] },
+    children: ["Trainers", "Overlays", "Recording", "Mods", "Utilities"] },
   { slug: "roblox", name: "Roblox Tools", icon: "roblox", accent: "#e6ecff", position: 2,
     description: "Studio helpers, asset utilities and quality-of-life tools for Roblox creators.",
-    children: ["Studio", "Assets"] },
+    children: ["Studio", "Assets", "Utilities"] },
   { slug: "crypto", name: "Crypto Tools", icon: "ethereum", accent: "#9d7bff", position: 3,
     description: "Wallets, portfolio trackers and on-chain analytics.",
-    children: ["Wallets", "Analytics", "Trading"] }
-];
-
-const PRODUCTS = [
-  { name: "WinOptimizer 26", category: "windows", sub: "Optimization", tags: ["optimization", "cleanup"],
-    short: "All-in-one Windows optimization and cleanup utility.",
-    long: "WinOptimizer bundles disk cleanup, startup management, registry maintenance and a live performance monitor into one interface. Scheduled maintenance runs in the background and every change can be rolled back from the built-in restore point manager.",
-    rating: 4.8, downloads: 128540, views: 402100, version: "26.1.4", size: "38 MB", price: "Free",
-    featured: true, popular: true, verified: true,
-    thumbnail: "https://images.unsplash.com/photo-1629654297299-c8506221ca97?auto=format&fit=crop&w=900&q=80",
-    features: ["One-click system cleanup", "Startup manager", "Live performance monitor", "Scheduled maintenance", "Restore points before every change"],
-    requirements: ["Windows 10 or 11 (64-bit)", "2 GB RAM", "250 MB free disk space"],
-    changelog: [
-      { version: "26.1.4", date: "2026-08-24", notes: "Faster disk scan and fixes for external drives." },
-      { version: "26.1.0", date: "2026-07-02", notes: "New startup manager and dark theme refresh." }
-    ] },
-  { name: "Malwarebytes", category: "windows", sub: "Security", tags: ["security", "antivirus"],
-    short: "Real-time protection against malware, ransomware and unwanted software.",
-    long: "A lightweight security scanner that pairs signature detection with behaviour analysis. The catalog entry tracks release notes and system requirements so you always know what changed before updating.",
-    rating: 4.6, downloads: 52110, views: 190400, version: "5.2", size: "86 MB", price: "Free",
-    verified: true, popular: true,
-    thumbnail: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=900&q=80",
-    features: ["Real-time protection", "Ransomware shield", "Browser guard", "Scheduled scans"],
-    requirements: ["Windows 10 or 11", "4 GB RAM"],
-    changelog: [{ version: "5.2", date: "2026-08-20", notes: "Reduced memory use during full scans." }] },
-  { name: "Driver Booster Pro", category: "windows", sub: "Drivers", tags: ["drivers", "utility"],
-    short: "Keeps every device driver on your machine current.",
-    long: "Scans installed hardware, matches it against a maintained driver database and installs updates with an automatic backup of the previous version.",
-    rating: 4.4, downloads: 41200, views: 118300, version: "12.0", size: "24 MB", price: "Premium",
-    thumbnail: "https://images.unsplash.com/photo-1591405351990-4726e331f141?auto=format&fit=crop&w=900&q=80",
-    features: ["Automatic driver backup", "Offline driver updater", "Game-ready driver profiles"],
-    requirements: ["Windows 10 or 11", "1 GB RAM"],
-    changelog: [{ version: "12.0", date: "2026-06-11", notes: "New offline update mode." }] },
-  { name: "FPS Overlay Studio", category: "game", sub: "Overlays", tags: ["overlay", "benchmark"],
-    short: "Frame-rate and hardware overlay for any game.",
-    long: "Shows frame time, GPU load and temperatures over your game without measurable overhead, and exports a session report you can compare between driver versions.",
-    rating: 4.7, downloads: 67320, views: 210800, version: "1.8.0", size: "12 MB", price: "Free",
-    featured: true, verified: true,
-    thumbnail: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=900&q=80",
-    features: ["Frame time graph", "Hardware sensors", "Session reports", "Per-game profiles"],
-    requirements: ["Windows 10 or 11", "DirectX 11 or Vulkan"],
-    changelog: [{ version: "1.8.0", date: "2026-08-15", notes: "Vulkan overlay support." }] },
-  { name: "ClipForge Recorder", category: "game", sub: "Recording", tags: ["recording", "capture"],
-    short: "Instant replay and clip capture for gameplay.",
-    long: "Keeps a rolling buffer of the last minutes of play so you can save a clip after something happens, with hardware encoding on modern GPUs.",
-    rating: 4.5, downloads: 38900, views: 96200, version: "3.2.1", size: "54 MB", price: "Free",
-    popular: true,
-    thumbnail: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=900&q=80",
-    features: ["Rolling replay buffer", "Hardware encoding", "Auto-trim silence"],
-    requirements: ["Windows 10 or 11", "NVENC, AMF or QuickSync capable GPU"],
-    changelog: [{ version: "3.2.1", date: "2026-07-28", notes: "Lower CPU use while idle." }] },
-  { name: "Roblox Studio Companion", category: "roblox", sub: "Studio", tags: ["studio", "workflow"],
-    short: "Workflow helpers for Roblox Studio creators.",
-    long: "Adds asset organization, a script snippet library and a place-file backup schedule to Roblox Studio. Built for creators who ship regularly and need their projects versioned.",
-    rating: 4.6, downloads: 88420, views: 265000, version: "3.4.2", size: "18 MB", price: "Free",
-    featured: true, verified: true,
-    thumbnail: "https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?auto=format&fit=crop&w=900&q=80",
-    features: ["Asset organizer", "Snippet library", "Automatic place backups", "Team-create helpers"],
-    requirements: ["Roblox Studio", "Windows 10 or 11 / macOS 13+"],
-    changelog: [{ version: "3.4.2", date: "2026-08-09", notes: "Backup scheduling and snippet search." }] },
-  { name: "Asset Pack Manager", category: "roblox", sub: "Assets", tags: ["assets", "library"],
-    short: "Organize and reuse your Roblox asset library.",
-    long: "Indexes the models, meshes and audio you own, tags them and pushes them into a place with one click.",
-    rating: 4.3, downloads: 21450, views: 62800, version: "2.1.0", size: "9 MB", price: "Free",
-    thumbnail: "https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?auto=format&fit=crop&w=900&q=80",
-    features: ["Tagged asset index", "Bulk import", "Duplicate detection"],
-    requirements: ["Roblox Studio"],
-    changelog: [{ version: "2.1.0", date: "2026-05-30", notes: "Duplicate detection across places." }] },
-  { name: "Exodus Wallet", category: "crypto", sub: "Wallets", tags: ["wallet", "multichain"],
-    short: "Multi-chain crypto wallet with a built-in exchange.",
-    long: "A desktop and mobile wallet supporting a wide set of chains, hardware wallet pairing and a portfolio view that tracks cost basis over time.",
-    rating: 4.7, downloads: 73450, views: 231400, version: "25.6", size: "96 MB", price: "Free",
-    featured: true, verified: true,
-    thumbnail: "https://images.unsplash.com/photo-1621761191319-c6fb62004040?auto=format&fit=crop&w=900&q=80",
-    features: ["Multi-chain support", "Hardware wallet pairing", "Portfolio tracking", "Built-in swaps"],
-    requirements: ["Windows 10+, macOS 13+ or Linux", "4 GB RAM"],
-    changelog: [{ version: "25.6", date: "2026-08-27", notes: "New portfolio cost-basis view." }] },
-  { name: "ChainWatch Analytics", category: "crypto", sub: "Analytics", tags: ["analytics", "onchain"],
-    short: "On-chain analytics and wallet monitoring.",
-    long: "Tracks wallets and contracts across chains, alerts on large movements and exports the underlying data as CSV for your own analysis.",
-    rating: 4.5, downloads: 34700, views: 88900, version: "4.8", size: "112 MB", price: "Premium",
-    popular: true,
-    thumbnail: "https://images.unsplash.com/photo-1621416894569-0f39ed31d247?auto=format&fit=crop&w=900&q=80",
-    features: ["Wallet alerts", "Contract monitoring", "CSV export", "Multi-chain dashboards"],
-    requirements: ["Any modern browser", "Desktop app: 8 GB RAM"],
-    changelog: [{ version: "4.8", date: "2026-08-02", notes: "Alert rules per wallet group." }] },
-  { name: "Ledger Live", category: "crypto", sub: "Wallets", tags: ["wallet", "hardware"],
-    short: "Companion app for hardware wallets.",
-    long: "Manages accounts on a hardware device, installs firmware updates and shows a consolidated portfolio without exposing private keys.",
-    rating: 4.4, downloads: 29800, views: 74100, version: "2.94", size: "142 MB", price: "Free",
-    verified: true,
-    thumbnail: "https://images.unsplash.com/photo-1640340434855-6084b1f4901c?auto=format&fit=crop&w=900&q=80",
-    features: ["Firmware updates", "Portfolio overview", "Staking support"],
-    requirements: ["Windows 10+, macOS 13+ or Linux", "Compatible hardware wallet"],
-    changelog: [{ version: "2.94", date: "2026-07-19", notes: "Faster account synchronisation." }] }
+    children: ["Wallets", "Analytics", "Trading", "Security"] }
 ];
 
 const FAQ_ITEMS = [
@@ -221,56 +136,73 @@ async function main() {
     }
   }
 
-  for (const item of PRODUCTS) {
-    const slug = item.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  // The placeholder catalog is removed by slug, but only when the entry still
+  // looks untouched, so an edited product is never deleted from under you.
+  const placeholders = await prisma.product.findMany({
+    where: { slug: { in: PLACEHOLDER_SLUGS }, downloadUrl: { startsWith: "https://example.com/" } },
+    select: { id: true, name: true }
+  });
+  if (placeholders.length) {
+    await prisma.product.deleteMany({ where: { id: { in: placeholders.map((p) => p.id) } } });
+    console.log(`  removed ${placeholders.length} placeholder products`);
+  }
+
+  for (const item of attachLogos(CATALOG)) {
+    const slug = item.name
+      .toLowerCase()
+      .replace(/\+/g, "-plus")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
     const categoryId = categoryIds.get(item.category);
     const subcategoryId = item.sub ? categoryIds.get(`${item.category}-${item.sub.toLowerCase()}`) : null;
+    if (!categoryId) throw new Error(`Unknown category "${item.category}" for ${item.name}`);
+    if (item.sub && !subcategoryId) throw new Error(`Unknown subcategory "${item.sub}" for ${item.name}`);
+
+    const data = {
+      name: item.name,
+      shortDescription: item.short,
+      longDescription: item.long,
+      categoryId,
+      subcategoryId,
+      // A catalog figure to start from. Real downloads are counted on top of it
+      // by the download endpoint; nothing here fabricates analytics events.
+      rating: item.rating,
+      downloads: item.downloads,
+      version: item.version,
+      fileSize: item.size,
+      license: item.price,
+      price: item.price,
+      officialUrl: `https://${item.site}`,
+      thumbnail: item.logo,
+      verified: true,
+      status: "published",
+      publishedAt: new Date(),
+      features: item.features,
+      requirements: item.requirements,
+      seoTitle: `${item.name} — download, version and details`,
+      seoDescription: item.short,
+      seoKeywords: item.tags
+    };
 
     const product = await prisma.product.upsert({
       where: { slug },
       update: {},
       create: {
+        ...data,
         slug,
-        name: item.name,
-        shortDescription: item.short,
-        longDescription: item.long,
-        categoryId,
-        subcategoryId,
-        rating: item.rating,
-        downloads: item.downloads,
-        views: item.views,
-        version: item.version,
-        fileSize: item.size,
-        license: item.price,
-        price: item.price,
-        downloadUrl: `https://example.com/download/${slug}`,
-        officialUrl: `https://example.com/${slug}`,
-        thumbnail: item.thumbnail,
-        featured: Boolean(item.featured),
-        popular: Boolean(item.popular),
-        verified: Boolean(item.verified),
-        status: "published",
-        publishedAt: new Date(),
-        features: item.features,
-        requirements: item.requirements,
-        changelog: item.changelog,
-        seoTitle: `${item.name} — download, version and details`,
-        seoDescription: item.short,
-        seoKeywords: item.tags,
-        images: {
-          create: [
-            { url: item.thumbnail, alt: `${item.name} cover`, kind: "gallery", position: 0 },
-            { url: item.thumbnail, alt: `${item.name} interface`, kind: "screenshot", position: 0 }
-          ]
-        }
+        // Left empty on purpose: point it at your own file or mirror from the
+        // admin panel, or upload an installer on the product's Links tab.
+        downloadUrl: "",
+        images: { create: [{ url: item.logo, alt: `${item.name} logo`, kind: "gallery", position: 0 }] }
       }
     });
 
     for (const tagName of item.tags) {
+      const tagSlug = tagName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
       const tag = await prisma.tag.upsert({
-        where: { slug: tagName },
+        where: { slug: tagSlug },
         update: {},
-        create: { slug: tagName, name: tagName }
+        create: { slug: tagSlug, name: tagName }
       });
       await prisma.productTag.upsert({
         where: { productId_tagId: { productId: product.id, tagId: tag.id } },
@@ -279,42 +211,39 @@ async function main() {
       });
     }
   }
+  console.log(`  catalog: ${CATALOG.length} products`);
 
   const products = await prisma.product.findMany({ select: { id: true } });
 
-  // Demo reviews so moderation and rating recalculation have something to work on.
-  const reviewSeeds = [
-    ["Mila K.", 5, "Exactly what I needed", "Clean interface and it did the job on the first run."],
-    ["Alex L.", 5, "Solid", "Detailed changelog made it easy to see what changed before updating."],
-    ["Sam K.", 4, "Good, with one gripe", "Works well, though the first scan took a while on an old laptop."],
-    ["Jamie M.", 5, "Recommended", "Downloaded straight from the official source, no surprises."],
-    ["David L.", 4, "Does what it says", "Simple, fast and the file size is honest."]
-  ];
-  if ((await prisma.review.count()) === 0) {
+  // Demo reviews and a fabricated event history are useful for a screenshot and
+  // misleading everywhere else, so they are off unless explicitly requested.
+  const withDemoActivity = process.env.SEED_DEMO_ACTIVITY === "1";
+
+  if (withDemoActivity && (await prisma.review.count()) === 0) {
+    const reviewSeeds = [
+      ["Mila K.", 5, "Exactly what I needed", "Clean interface and it did the job on the first run."],
+      ["Alex L.", 5, "Solid", "Detailed changelog made it easy to see what changed before updating."],
+      ["Sam K.", 4, "Good, with one gripe", "Works well, though the first scan took a while on an old laptop."],
+      ["Jamie M.", 5, "Recommended", "Downloaded straight from the official source, no surprises."],
+      ["David L.", 4, "Does what it says", "Simple, fast and the file size is honest."]
+    ];
     for (const [index, product] of products.entries()) {
       const [authorName, rating, title, body] = reviewSeeds[index % reviewSeeds.length];
       await prisma.review.create({
         data: { productId: product.id, authorName, rating, title, body, status: "approved", country: "United States" }
       });
     }
-    await prisma.review.create({
-      data: {
-        productId: products[0].id,
-        authorName: "Pending Pat",
-        rating: 3,
-        title: "Waiting on moderation",
-        body: "This one is left pending so the review queue in the admin panel is not empty.",
-        status: "pending"
-      }
-    });
   }
 
+  // Ratings follow approved reviews. A product with none keeps the catalog
+  // figure it was seeded with instead of being reset to zero.
   for (const product of products) {
     const stats = await prisma.review.aggregate({
       where: { productId: product.id, status: "approved" },
       _avg: { rating: true },
       _count: { _all: true }
     });
+    if (stats._count._all === 0) continue;
     await prisma.product.update({
       where: { id: product.id },
       data: {
@@ -324,52 +253,8 @@ async function main() {
     });
   }
 
-  // 90 days of download/view events so every analytics chart has real shape.
-  if ((await prisma.downloadEvent.count()) === 0) {
-    const weights = [["US", 26], ["IN", 14], ["BR", 9], ["DE", 7], ["GB", 6], ["FR", 5], ["CA", 4],
-      ["ID", 4], ["PL", 3], ["ES", 3], ["JP", 3], ["AU", 2], ["NG", 2], ["MX", 2], ["TR", 2]];
-    const pool = weights.flatMap(([code, weight]) => Array(weight).fill(code));
-    const countryNames = Object.fromEntries(COUNTRIES.map(([code, name]) => [code, name]));
-    const referrers = ["", "https://www.google.com/", "https://duckduckgo.com/", "https://news.ycombinator.com/", "https://x.com/"];
-    const devices = ["desktop", "desktop", "desktop", "mobile", "mobile", "tablet"];
-
-    const downloads = [];
-    const views = [];
-    for (let dayOffset = 89; dayOffset >= 0; dayOffset -= 1) {
-      const day = new Date();
-      day.setDate(day.getDate() - dayOffset);
-      // Gentle upward trend with a weekday rhythm.
-      const base = 18 + Math.round((90 - dayOffset) / 4);
-      const weekend = [0, 6].includes(day.getDay()) ? 0.7 : 1;
-      const count = Math.max(4, Math.round(base * weekend * (0.75 + Math.random() * 0.5)));
-      for (let i = 0; i < count; i += 1) {
-        const at = new Date(day);
-        at.setHours(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60));
-        const code = pool[Math.floor(Math.random() * pool.length)];
-        const product = products[Math.floor(Math.random() * products.length)];
-        const shared = {
-          productId: product.id,
-          countryCode: code,
-          country: countryNames[code],
-          referrer: referrers[Math.floor(Math.random() * referrers.length)],
-          device: devices[Math.floor(Math.random() * devices.length)],
-          ipHash: `seed-${Math.floor(Math.random() * 4000)}`,
-          createdAt: at
-        };
-        downloads.push(shared);
-        views.push({ ...shared, path: "/product" });
-        if (Math.random() > 0.55) views.push({ ...shared, path: "/", productId: null });
-      }
-    }
-    await prisma.downloadEvent.createMany({ data: downloads });
-    await prisma.viewEvent.createMany({ data: views });
-    console.log(`  events: ${downloads.length} downloads, ${views.length} views`);
-
-    for (const [code] of weights) {
-      const dl = downloads.filter((row) => row.countryCode === code).length;
-      const vw = views.filter((row) => row.countryCode === code).length;
-      await prisma.country.update({ where: { code }, data: { downloads: dl, views: vw } });
-    }
+  if (withDemoActivity && (await prisma.downloadEvent.count()) === 0) {
+    await seedDemoEvents(products);
   }
 
   const pages = [
@@ -433,6 +318,58 @@ async function main() {
   }
 
   console.log("Seed complete.");
+}
+
+// Only used by SEED_DEMO_ACTIVITY=1: 90 days of invented downloads and views,
+// for demonstrating the analytics screens on a machine with no real traffic.
+async function seedDemoEvents(products) {
+  const weights = [["US", 26], ["IN", 14], ["BR", 9], ["DE", 7], ["GB", 6], ["FR", 5], ["CA", 4],
+    ["ID", 4], ["PL", 3], ["ES", 3], ["JP", 3], ["AU", 2], ["NG", 2], ["MX", 2], ["TR", 2]];
+  const pool = weights.flatMap(([code, weight]) => Array(weight).fill(code));
+  const countryNames = Object.fromEntries(COUNTRIES.map(([code, name]) => [code, name]));
+  const referrers = ["", "https://www.google.com/", "https://duckduckgo.com/", "https://news.ycombinator.com/", "https://x.com/"];
+  const devices = ["desktop", "desktop", "desktop", "mobile", "mobile", "tablet"];
+
+  const downloads = [];
+  const views = [];
+  for (let dayOffset = 89; dayOffset >= 0; dayOffset -= 1) {
+    const day = new Date();
+    day.setDate(day.getDate() - dayOffset);
+    const base = 18 + Math.round((90 - dayOffset) / 4);
+    const weekend = [0, 6].includes(day.getDay()) ? 0.7 : 1;
+    const count = Math.max(4, Math.round(base * weekend * (0.75 + Math.random() * 0.5)));
+    for (let i = 0; i < count; i += 1) {
+      const at = new Date(day);
+      at.setHours(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60));
+      const code = pool[Math.floor(Math.random() * pool.length)];
+      const product = products[Math.floor(Math.random() * products.length)];
+      const shared = {
+        productId: product.id,
+        countryCode: code,
+        country: countryNames[code],
+        referrer: referrers[Math.floor(Math.random() * referrers.length)],
+        device: devices[Math.floor(Math.random() * devices.length)],
+        ipHash: `seed-${Math.floor(Math.random() * 4000)}`,
+        createdAt: at
+      };
+      downloads.push(shared);
+      views.push({ ...shared, path: "/product" });
+      if (Math.random() > 0.55) views.push({ ...shared, path: "/", productId: null });
+    }
+  }
+  await prisma.downloadEvent.createMany({ data: downloads });
+  await prisma.viewEvent.createMany({ data: views });
+  console.log(`  demo activity: ${downloads.length} downloads, ${views.length} views`);
+
+  for (const [code] of weights) {
+    await prisma.country.update({
+      where: { code },
+      data: {
+        downloads: downloads.filter((row) => row.countryCode === code).length,
+        views: views.filter((row) => row.countryCode === code).length
+      }
+    });
+  }
 }
 
 main()

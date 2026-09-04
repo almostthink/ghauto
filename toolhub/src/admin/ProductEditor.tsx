@@ -34,10 +34,6 @@ interface FormValues {
   downloadUrl: string;
   officialUrl: string;
   thumbnail: string;
-  rating: number;
-  reviewCount: number;
-  downloads: number;
-  views: number;
   seoTitle: string;
   seoDescription: string;
   seoKeywords: string;
@@ -50,7 +46,7 @@ const EMPTY: FormValues = {
   name: "", slug: "", shortDescription: "", longDescription: "", categoryId: "", subcategoryId: "",
   version: "1.0.0", fileSize: "", license: "Free", price: "Free", status: "draft",
   featured: false, popular: false, verified: false, downloadUrl: "", officialUrl: "", thumbnail: "",
-  rating: 0, reviewCount: 0, downloads: 0, views: 0, seoTitle: "", seoDescription: "", seoKeywords: "",
+  seoTitle: "", seoDescription: "", seoKeywords: "",
   tags: "", availabilityMode: "all", countryAvailability: ""
 };
 
@@ -72,10 +68,6 @@ const toForm = (product: Product): FormValues => ({
   downloadUrl: product.downloadUrl,
   officialUrl: product.officialUrl,
   thumbnail: product.thumbnail,
-  rating: product.rating,
-  reviewCount: product.reviewCount,
-  downloads: product.downloads,
-  views: product.views,
   seoTitle: product.seoTitle,
   seoDescription: product.seoDescription,
   seoKeywords: product.seoKeywords.join(", "),
@@ -169,10 +161,6 @@ export function ProductEditor() {
     const payload = {
       ...formValues,
       subcategoryId: formValues.subcategoryId || null,
-      rating: Number(formValues.rating),
-      reviewCount: Number(formValues.reviewCount),
-      downloads: Number(formValues.downloads),
-      views: Number(formValues.views),
       seoKeywords: splitList(formValues.seoKeywords),
       tags: splitList(formValues.tags),
       countryAvailability: splitList(formValues.countryAvailability).map((code) => code.toUpperCase()),
@@ -335,22 +323,17 @@ export function ProductEditor() {
       ) : null}
 
       {tab === "Analytics" ? (
-        <AdminPanel title="Counters" subtitle="Live values. Edit only to correct an import.">
-          <div className="form-grid">
-            <label>Rating<input type="number" step="0.1" min="0" max="5" {...register("rating")} /></label>
-            <label>Review count<input type="number" min="0" {...register("reviewCount")} /></label>
-            <label>Downloads<input type="number" min="0" {...register("downloads")} /></label>
-            <label>Views<input type="number" min="0" {...register("views")} /></label>
+        <AdminPanel title="Measured figures" subtitle="Counted from real activity, not editable">
+          <div className="counter-summary">
+            <div><b>{formatNumber(product?.downloads ?? 0)}</b><span>Downloads</span></div>
+            <div><b>{formatNumber(product?.views ?? 0)}</b><span>Views</span></div>
+            <div><b>{product?.rating ? product.rating.toFixed(2) : "—"}</b><span>Rating</span></div>
+            <div><b>{formatNumber(product?.reviewCount ?? 0)}</b><span>Approved reviews</span></div>
           </div>
-          {product ? (
-            <div className="counter-summary">
-              <div><b>{formatNumber(product.downloads)}</b><span>Lifetime downloads</span></div>
-              <div><b>{formatNumber(product.views)}</b><span>Lifetime views</span></div>
-              <div><b>{formatNumber(product.reviewCount)}</b><span>Approved reviews</span></div>
-            </div>
-          ) : null}
           <p className="form-note">
-            Ratings and review counts are recalculated automatically whenever a review is approved or removed.
+            Downloads and views are incremented by the download endpoint and the page-view beacon; the rating and review
+            count are recalculated whenever a review is approved or removed. They are shown here for reference and cannot
+            be typed in, so the dashboard only ever reports real activity.
           </p>
         </AdminPanel>
       ) : null}
