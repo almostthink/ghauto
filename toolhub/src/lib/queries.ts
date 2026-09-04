@@ -61,7 +61,6 @@ export const usePages = () =>
   useQuery({ queryKey: ["pages"], queryFn: () => api<{ items: Page[] }>("/pages") });
 
 export interface RuntimeConfig {
-  adminPath: string;
   turnstile: { enabled: boolean; siteKey: string; reviews: boolean; login: boolean };
 }
 

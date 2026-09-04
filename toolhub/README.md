@@ -76,12 +76,13 @@ sudo -u toolhub nano .env          # см. пункт 5
 sudo -u toolhub npx prisma generate
 sudo -u toolhub npm run db:migrate  # prisma migrate deploy
 sudo -u toolhub npm run db:seed     # только при первой установке
-sudo -u toolhub VITE_ADMIN_PATH=/p-7f3a91 npm run build
+sudo -u toolhub npm run build
 ```
 
-`VITE_ADMIN_PATH` подставляется на этапе сборки, поэтому путь к панели попадает
-в бандл. Он должен совпадать с `ADMIN_PATH` в `.env`, иначе `robots.txt` будет
-закрывать не тот адрес.
+Путь к панели берётся из `ADMIN_PATH` в `.env` **и на сервере, и при сборке**:
+Vite читает тот же файл, поэтому обычный `npm run build` всегда собирает бандл
+с вашим адресом. Сборка печатает его в лог: `[toolhub] admin panel path: ...`,
+по этой строке можно проверить, что путь тот самый.
 
 ### 5. Переменные окружения
 
@@ -225,7 +226,7 @@ sudo -u toolhub git pull
 cd toolhub
 sudo -u toolhub npm ci
 sudo -u toolhub npm run db:migrate
-sudo -u toolhub env VITE_ADMIN_PATH=/p-7f3a91 npm run build
+sudo -u toolhub npm run build
 sudo systemctl restart toolhub
 ```
 
@@ -256,7 +257,7 @@ tar czf /var/backups/toolhub-files-$(date +%F).tar.gz /var/lib/toolhub
 
 ```bash
 curl -s https://example.com/api/health     # {"status":"ok","database":"up"}
-curl -s https://example.com/robots.txt     # Disallow должен указывать на ваш ADMIN_PATH
+curl -s https://example.com/robots.txt     # адреса панели тут быть не должно
 curl -sI https://example.com/sitemap.xml
 ```
 
@@ -414,18 +415,22 @@ curl -s -X POST https://example.com/api/reviews \
 
 - на сайте нет ни одной ссылки на неё, и её код лежит в отдельном chunk,
   который посетитель вообще не скачивает;
-- путь настраивается: `VITE_ADMIN_PATH` при сборке фронтенда и `ADMIN_PATH`
-  на сервере (чтобы совпал `robots.txt`). По умолчанию `/admin`, для боевого
-  сайта задайте что-то неугадываемое, например `/p-7f3a91`;
-- страница отдаётся с `X-Robots-Tag: noindex, nofollow`, запрещена в
-  `robots.txt` и не попадает в `sitemap.xml`;
+- путь задаётся одной переменной `ADMIN_PATH` в `.env`: её читает и сервер, и
+  сборка фронтенда. По умолчанию `/admin`, для боевого сайта поставьте что-то
+  неугадываемое, например `/p-7f3a91`;
+- страница отдаётся с `X-Robots-Tag: noindex, nofollow` и не попадает ни в
+  `sitemap.xml`, ни в `robots.txt`: перечислять секретный адрес в `robots.txt`
+  значит опубликовать его, поэтому там его нет;
 - без валидной сессии видна только форма входа, никаких данных каталога.
 
 ```bash
 # пример боевой конфигурации
-ADMIN_PATH=/p-7f3a91          # .env для сервера
-VITE_ADMIN_PATH=/p-7f3a91 npm run build
+ADMIN_PATH=/p-7f3a91          # .env, дальше просто npm run build
 ```
+
+Если по адресу панели открылась страница 404 сайта, значит бандл собран со
+старым путём: проверьте `ADMIN_PATH` в `.env`, пересоберите (`npm run build`)
+и посмотрите строку `[toolhub] admin panel path:` в выводе сборки.
 
 Скрытый путь это не замена авторизации, а дополнительный слой: доступ всё
 равно проверяется на сервере при каждом запросе.

@@ -87,7 +87,6 @@ app.get("/api/health", async (_req, res) => {
 // its forms. Only the public site key is exposed, never the secret.
 app.get("/api/config", (_req, res) => {
   res.json({
-    adminPath: env.adminPath,
     turnstile: {
       enabled: env.turnstile.enabled,
       siteKey: env.turnstile.siteKey,

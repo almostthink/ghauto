@@ -6,14 +6,14 @@ import { route } from "../lib/http.js";
 
 export const seoRouter = express.Router();
 
-// robots.txt keeps the admin panel out of every index. The panel is also
-// unlinked from the site and served with X-Robots-Tag: noindex.
+// The admin panel is deliberately absent here: naming its address in
+// robots.txt would publish the very thing that keeps it hidden. It is unlinked
+// from the site and served with X-Robots-Tag: noindex instead.
 seoRouter.get("/robots.txt", (_req, res) => {
   res.type("text/plain").send(
     [
       "User-agent: *",
       "Allow: /",
-      `Disallow: ${env.adminPath}`,
       "Disallow: /api/",
       "",
       `Sitemap: ${env.publicSiteUrl}/sitemap.xml`,

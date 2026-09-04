@@ -42,8 +42,8 @@ export function Login() {
           showing anything, so validation is reported in the form instead. */}
       <form className="login-card" onSubmit={onSubmit} noValidate>
         <div className="login-mark"><KeyRound size={20} /></div>
-        <h1>Staff sign in</h1>
-        <p>This area is restricted. Sign in with your ToolHub staff account.</p>
+        <h1>Admin sign in</h1>
+        <p>This area is restricted. Sign in with the administrator account.</p>
 
         <label>
           <UserRound size={13} /> Login
