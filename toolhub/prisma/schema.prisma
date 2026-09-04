@@ -41,7 +41,9 @@ enum AvailabilityMode {
 
 model User {
   id           String    @id @default(uuid())
-  email        String    @unique
+  // Sign-in name for the panel. Not an email: nothing here sends mail, and an
+  // address only added a validation rule that could lock the owner out.
+  username     String    @unique
   name         String
   passwordHash String
   lastLoginAt  DateTime?
@@ -273,16 +275,16 @@ model ViewEvent {
 }
 
 model AuditLog {
-  id         String   @id @default(uuid())
-  userId     String?
-  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  actorEmail String   @default("")
-  action     String
-  entity     String
-  entityId   String   @default("")
-  meta       Json     @default("{}")
-  ip         String   @default("")
-  createdAt  DateTime @default(now())
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  actorName String   @default("")
+  action    String
+  entity    String
+  entityId  String   @default("")
+  meta      Json     @default("{}")
+  ip        String   @default("")
+  createdAt DateTime @default(now())
 
   @@index([createdAt])
   @@index([entity, entityId])

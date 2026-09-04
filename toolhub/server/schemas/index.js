@@ -8,8 +8,17 @@ const url = z.string().trim().max(600).refine(
 
 // `turnstileToken` is verified before validation runs, so it is only allowed
 // through here rather than being re-checked.
+// A plain sign-in name, not an address: letters, digits and . _ - only, so a
+// value that the form or the browser might reject can never be stored.
+export const usernameSchema = z
+  .string()
+  .trim()
+  .min(3, "At least 3 characters")
+  .max(60)
+  .regex(/^[A-Za-z0-9._-]+$/, "Latin letters, digits, dot, underscore and dash only");
+
 export const loginSchema = z.object({
-  email: z.string().trim().email().max(200),
+  username: usernameSchema,
   password: z.string().min(8).max(200),
   turnstileToken: z.string().max(4000).optional()
 });
@@ -134,9 +143,9 @@ export const reviewPatchSchema = z.object({
 });
 
 // The panel has a single administrator, who can rename the account and change
-// its email from Settings. There is no account creation flow.
+// its sign-in name from Settings. There is no account creation flow.
 export const profileSchema = z.object({
-  email: z.string().trim().email().max(200),
+  username: usernameSchema,
   name: trimmed(120).min(2)
 });
 

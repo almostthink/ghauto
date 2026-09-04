@@ -8,7 +8,7 @@ export async function audit(req, action, entity, entityId, meta = {}) {
     await prisma.auditLog.create({
       data: {
         userId: req.user?.id ?? null,
-        actorEmail: req.user?.email ?? "",
+        actorName: req.user?.username ?? "",
         action,
         entity,
         entityId: entityId ? String(entityId) : "",

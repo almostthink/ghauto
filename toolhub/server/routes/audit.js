@@ -15,7 +15,7 @@ auditRouter.get("/", route(async (req, res) => {
   res.json({
     items: rows.map((row) => ({
       id: row.id,
-      actorEmail: row.actorEmail,
+      actorName: row.actorName,
       action: row.action,
       entity: row.entity,
       entityId: row.entityId,

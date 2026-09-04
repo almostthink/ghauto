@@ -31,9 +31,9 @@ Production:
 npm run build && npm start   # Express отдаёт dist/ и API с одного порта
 ```
 
-Учётная запись из сида: `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` из `.env`
-(по умолчанию `admin@toolhub.local` / `ChangeMe123!`). **Смените пароль сразу
-после первого входа.**
+Учётная запись из сида: `SEED_ADMIN_LOGIN` / `SEED_ADMIN_PASSWORD` из `.env`
+(по умолчанию `admin` / `ChangeMe123!`). Вход по логину, не по email.
+**Смените пароль сразу после первого входа.**
 
 ## Деплой на сервер
 
@@ -104,8 +104,8 @@ PRODUCT_FILE_MAX_MB=512
 STORAGE_DRIVER=local
 UPLOADS_DIR=/var/lib/toolhub/uploads
 
-# Латиницей: кириллица в адресе сделает аккаунт, в который нельзя войти
-SEED_ADMIN_EMAIL="you@example.com"
+# Логин для входа в панель, не email: латиница, цифры, точка, дефис, подчёркивание
+SEED_ADMIN_LOGIN="admin"
 SEED_ADMIN_PASSWORD="TempPass12345"
 ```
 
@@ -422,9 +422,13 @@ VITE_ADMIN_PATH=/p-7f3a91 npm run build
 ## Администратор
 
 В системе ровно один вход: аккаунт администратора панели. Сотрудников, ролей и
-регистрации нет. Учётные данные создаются сидом из `SEED_ADMIN_EMAIL` и
-`SEED_ADMIN_PASSWORD`, дальше имя, email и пароль меняются в разделе
+регистрации нет. Вход выполняется по **логину**, а не по email: почта нигде не
+используется, а адрес добавлял только правило валидации, из-за которого можно
+было остаться без доступа. Учётные данные создаются сидом из `SEED_ADMIN_LOGIN`
+и `SEED_ADMIN_PASSWORD`, дальше логин, имя и пароль меняются в разделе
 **Settings → Administrator account**, без правки базы.
+
+Логин: латинские буквы, цифры, точка, дефис и подчёркивание, минимум 3 символа.
 
 Сервер проверяет сессию на каждом запросе к админским эндпоинтам, интерфейс
 ничего не решает сам по себе.
@@ -436,7 +440,7 @@ GET    /api/health
 
 POST   /api/auth/login             POST /api/auth/logout
 GET    /api/auth/me                POST /api/auth/password
-PUT    /api/auth/profile
+PUT    /api/auth/profile           (логин и имя)
 
 GET    /api/products               GET  /api/products/suggest
 GET    /api/products/:idOrSlug     GET  /api/products/:id/related
@@ -458,7 +462,7 @@ PUT    /api/pages/:slug            DELETE /api/pages/:slug
 GET    /api/reviews                POST /api/reviews
 PUT    /api/reviews/:id            DELETE /api/reviews/:id
 
-GET    /api/audit
+GET    /api/audit                  (журнал изменений)
 
 GET    /api/analytics/overview     GET  /api/analytics/downloads
 GET    /api/analytics/countries    GET  /api/analytics/products

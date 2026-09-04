@@ -32,7 +32,7 @@ export function useSession() {
 export function useLogin() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (body: { email: string; password: string; turnstileToken?: string }) =>
+    mutationFn: (body: { username: string; password: string; turnstileToken?: string }) =>
       api<{ user: AdminUser }>("/auth/login", { method: "POST", body }),
     onSuccess: () => client.invalidateQueries({ queryKey: ["session"] })
   });
@@ -49,7 +49,7 @@ export function useLogout() {
 export function useUpdateProfile() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (body: { email: string; name: string }) =>
+    mutationFn: (body: { username: string; name: string }) =>
       api<{ user: AdminUser }>("/auth/profile", { method: "PUT", body }),
     onSuccess: () => client.invalidateQueries({ queryKey: ["session"] })
   });

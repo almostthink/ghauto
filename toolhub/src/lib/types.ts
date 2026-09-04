@@ -136,7 +136,7 @@ export interface Review {
 // The single administrator of the hidden panel. Visitors have no accounts.
 export interface AdminUser {
   id: string;
-  email: string;
+  username: string;
   name: string;
   lastLoginAt: string | null;
   createdAt: string;

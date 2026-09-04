@@ -173,25 +173,25 @@ async function main() {
   });
 
   // A single administrator account; the panel has no staff management.
-  const adminEmail = env.seed.adminEmail.toLowerCase();
-  // Catch an address that would create an account nobody can sign in to: the
-  // sign-in form and the API both require a plain ASCII email.
-  if (!/^[\x20-\x7e]+$/.test(adminEmail) || !/^[^\s@]+@[^\s@.]+\.[^\s@]+$/.test(adminEmail)) {
+  const adminLogin = env.seed.adminLogin.toLowerCase();
+  // Refuse a value the sign-in form would reject, rather than writing an
+  // account nobody can use.
+  if (!/^[a-z0-9._-]{3,60}$/.test(adminLogin)) {
     throw new Error(
-      `SEED_ADMIN_EMAIL is not a valid email address: "${env.seed.adminEmail}". ` +
-      "Use a plain address such as you@example.com, then run the seed again."
+      `SEED_ADMIN_LOGIN is not a valid login: "${env.seed.adminLogin}". ` +
+      "Use latin letters, digits, dot, underscore or dash, at least 3 characters."
     );
   }
   await prisma.user.upsert({
-    where: { email: adminEmail },
+    where: { username: adminLogin },
     update: {},
     create: {
-      email: adminEmail,
+      username: adminLogin,
       name: "Administrator",
       passwordHash: await bcrypt.hash(env.seed.adminPassword, 12)
     }
   });
-  console.log(`  admin: ${adminEmail}`);
+  console.log(`  admin login: ${adminLogin}`);
 
   const categoryIds = new Map();
   for (const category of CATEGORIES) {

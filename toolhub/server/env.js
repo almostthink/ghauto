@@ -89,7 +89,9 @@ export const env = {
       : path.join(dirname, "uploads")
   },
   seed: {
-    adminEmail: process.env.SEED_ADMIN_EMAIL || "admin@toolhub.local",
+    // SEED_ADMIN_EMAIL is still read so an existing .env keeps working after
+    // the switch from email to a plain login.
+    adminLogin: process.env.SEED_ADMIN_LOGIN || process.env.SEED_ADMIN_EMAIL || "admin",
     adminPassword: process.env.SEED_ADMIN_PASSWORD || "ChangeMe123!"
   }
 };

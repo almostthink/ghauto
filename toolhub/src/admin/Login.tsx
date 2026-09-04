@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { KeyRound, Lock, Mail } from "lucide-react";
+import { KeyRound, Lock, UserRound } from "lucide-react";
 import { Spinner } from "../components/ui";
 import { Turnstile } from "../components/Turnstile";
 import { useConfig } from "../lib/queries";
 import { useLogin } from "./auth";
 
 interface LoginForm {
-  email: string;
+  username: string;
   password: string;
 }
 
@@ -46,22 +46,23 @@ export function Login() {
         <p>This area is restricted. Sign in with your ToolHub staff account.</p>
 
         <label>
-          <Mail size={13} /> Email
+          <UserRound size={13} /> Login
           <input
-            type="email"
+            type="text"
             autoComplete="username"
-            {...register("email", {
-              required: "Email is required",
-              // ASCII only: the API rejects anything else, and a browser can
-              // silently refuse to submit a field it considers invalid.
+            autoCapitalize="none"
+            spellCheck={false}
+            {...register("username", {
+              required: "Login is required",
+              minLength: { value: 3, message: "At least 3 characters" },
               pattern: {
-                value: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/,
-                message: "Enter a valid email address, latin letters only"
+                value: /^[A-Za-z0-9._-]+$/,
+                message: "Latin letters, digits, dot, underscore and dash only"
               }
             })}
-            placeholder="you@toolhub.local"
+            placeholder="admin"
           />
-          {errors.email ? <em className="field-error">{errors.email.message}</em> : null}
+          {errors.username ? <em className="field-error">{errors.username.message}</em> : null}
         </label>
 
         <label>

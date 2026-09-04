@@ -52,7 +52,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
           <div className="avatar profile-avatar">{initials}</div>
           <div>
             <b>{user?.name}</b>
-            <small>{user?.email}</small>
+            <small>{user?.username}</small>
           </div>
         </div>
 

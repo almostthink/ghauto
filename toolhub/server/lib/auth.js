@@ -17,7 +17,7 @@ export function verifyPassword(plain, hash) {
 
 export function signSession(user) {
   return jwt.sign(
-    { sub: user.id, email: user.email },
+    { sub: user.id, username: user.username },
     env.jwtSecret,
     { expiresIn: `${env.sessionTtlHours}h` }
   );
@@ -60,7 +60,7 @@ export function clearCookies(res) {
 export function publicUser(user) {
   return {
     id: user.id,
-    email: user.email,
+    username: user.username,
     name: user.name,
     lastLoginAt: user.lastLoginAt,
     createdAt: user.createdAt

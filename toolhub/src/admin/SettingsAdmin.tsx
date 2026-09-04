@@ -251,14 +251,14 @@ function AccountPanel() {
   const toast = useToast();
 
   const [name, setName] = useState(user?.name ?? "");
-  const [email, setEmail] = useState(user?.email ?? "");
+  const [username, setUsername] = useState(user?.username ?? "");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
 
   const saveProfile = async () => {
     try {
-      await updateProfile.mutateAsync({ name, email });
+      await updateProfile.mutateAsync({ name, username });
       toast("Account updated");
     } catch (error) {
       toast(error instanceof Error ? error.message : "Could not update the account", "error");
@@ -294,7 +294,16 @@ function AccountPanel() {
       >
         <div className="form-grid">
           <label>Name<input value={name} onChange={(event) => setName(event.target.value)} /></label>
-          <label>Sign-in email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} /></label>
+          <label>
+            Login
+            <input
+              value={username}
+              autoCapitalize="none"
+              spellCheck={false}
+              onChange={(event) => setUsername(event.target.value)}
+              placeholder="admin"
+            />
+          </label>
         </div>
         <p className="form-note">
           Last sign in: {user?.lastLoginAt ? `${formatRelative(user.lastLoginAt)} (${formatDate(user.lastLoginAt)})` : "never"}.
@@ -349,7 +358,7 @@ function ActivityPanel() {
               <td>{formatDate(entry.createdAt)} · {formatRelative(entry.createdAt)}</td>
               <td>{entry.action.replace(/[._]/g, " ")}</td>
               <td>{entry.entity}{entry.entityId ? ` · ${entry.entityId.slice(0, 8)}` : ""}</td>
-              <td>{entry.actorEmail || "system"}</td>
+              <td>{entry.actorName || "system"}</td>
             </tr>
           ))}
         </tbody>

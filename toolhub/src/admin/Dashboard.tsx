@@ -168,7 +168,7 @@ export function Dashboard() {
               <span className="activity-dot" />
               <div>
                 <b>{entry.action.replace(/[._]/g, " ")} · {entry.entity}</b>
-                <small>{entry.actorEmail} · {formatRelative(entry.createdAt)}</small>
+                <small>{entry.actorName} · {formatRelative(entry.createdAt)}</small>
               </div>
             </div>
           ))}

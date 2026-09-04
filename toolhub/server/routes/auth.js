@@ -12,13 +12,13 @@ export const authRouter = express.Router();
 
 authRouter.post("/login", loginLimiter, route(async (req, res) => {
   if (turnstileRequired("login")) await verifyTurnstile(req.body?.turnstileToken, req);
-  const { email, password } = parseBody(loginSchema, req.body);
-  const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+  const { username, password } = parseBody(loginSchema, req.body);
+  const user = await prisma.user.findUnique({ where: { username: username.toLowerCase() } });
 
-  // Same response for an unknown email and a wrong password, so the endpoint
-  // cannot be used to confirm which address the administrator uses.
+  // Same response for an unknown name and a wrong password, so the endpoint
+  // cannot be used to confirm which login the administrator uses.
   const ok = user && (await verifyPassword(password, user.passwordHash));
-  if (!ok) throw unauthorized("Invalid email or password");
+  if (!ok) throw unauthorized("Invalid login or password");
 
   await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
   const csrfToken = issueCookies(res, user);
@@ -40,12 +40,12 @@ authRouter.get("/me", route(async (req, res) => {
 
 authRouter.put("/profile", requireAuth, route(async (req, res) => {
   const input = parseBody(profileSchema, req.body);
-  const email = input.email.toLowerCase();
-  const clash = await prisma.user.findUnique({ where: { email } });
-  if (clash && clash.id !== req.user.id) throw new HttpError(409, "That email is already in use");
+  const username = input.username.toLowerCase();
+  const clash = await prisma.user.findUnique({ where: { username } });
+  if (clash && clash.id !== req.user.id) throw new HttpError(409, "That login is already taken");
   const user = await prisma.user.update({
     where: { id: req.user.id },
-    data: { email, name: input.name }
+    data: { username, name: input.name }
   });
   await audit(req, "auth.profile_update", "user", user.id, {});
   res.json({ user: publicUser(user) });

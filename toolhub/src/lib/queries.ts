@@ -91,7 +91,7 @@ export const useAuditLog = (limit = 20) =>
   useQuery({
     queryKey: ["audit", limit],
     queryFn: () =>
-      api<{ items: { id: string; actorEmail: string; action: string; entity: string; entityId: string; createdAt: string }[] }>(
+      api<{ items: { id: string; actorName: string; action: string; entity: string; entityId: string; createdAt: string }[] }>(
         `/audit${queryString({ limit })}`
       )
   });
