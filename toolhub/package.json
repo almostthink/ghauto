@@ -15,7 +15,7 @@
     "db:migrate": "prisma migrate deploy && prisma generate",
     "db:migrate:dev": "prisma migrate dev",
     "db:push": "prisma db push",
-    "db:seed": "node prisma/seed.js",
+    "db:seed": "node prisma/seed.js && node prisma/seed-additions.js",
     "db:reset": "prisma migrate reset --force",
     "update": "npm ci && npm run db:migrate && npm run build"
   },
@@ -27,7 +27,7 @@
     "@tanstack/react-query": "^5.62.11",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.7",
-    "cors": "^2.8.5",
+    "cors": "^2.2.1",
     "express": "^5.2.1",
     "express-rate-limit": "^8.7.0",
     "helmet": "^8.3.0",
