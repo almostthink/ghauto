@@ -20,12 +20,21 @@ export function Login() {
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>();
 
   const needsChallenge = config?.turnstile.login === true;
-  const onSubmit = handleSubmit((values) =>
+  const [blocked, setBlocked] = useState("");
+
+  const onSubmit = handleSubmit((values) => {
+    // A disabled button with no explanation looks like a broken page, so the
+    // missing challenge is reported instead of silently swallowing the click.
+    if (needsChallenge && !botToken) {
+      setBlocked("Complete the bot check above, then sign in. If it does not appear, disable your blocker for this page.");
+      return;
+    }
+    setBlocked("");
     login.mutate(
       { ...values, ...(needsChallenge ? { turnstileToken: botToken } : {}) },
       { onError: () => setBotToken("") }
-    )
-  );
+    );
+  });
 
   return (
     <div className="login-shell">
@@ -59,16 +68,13 @@ export function Login() {
         {login.isError ? (
           <div className="login-error">{login.error instanceof Error ? login.error.message : "Sign in failed"}</div>
         ) : null}
+        {blocked ? <div className="login-error">{blocked}</div> : null}
 
         {needsChallenge && config ? (
           <Turnstile siteKey={config.turnstile.siteKey} onToken={setBotToken} />
         ) : null}
 
-        <button
-          className="btn primary full"
-          type="submit"
-          disabled={login.isPending || (needsChallenge && !botToken)}
-        >
+        <button className="btn primary full" type="submit" disabled={login.isPending}>
           {login.isPending ? <Spinner size={14} /> : null} Sign in
         </button>
         <small className="login-note">Sessions expire automatically. Repeated failures are rate limited.</small>

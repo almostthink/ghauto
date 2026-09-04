@@ -8,11 +8,13 @@ import { EthereumMark, GamepadMark, RobloxMark, WindowsMark } from "./BrandIcons
 type Point = [number, number];
 
 // The box is defined by one corner and three vectors, so every face is derived
-// from the same numbers and stays consistent if the shape is tweaked.
-const ORIGIN: Point = [96, 104];
-const RIGHT: Point = [228, -26];   // along the front face, left to right
-const DOWN: Point = [6, 238];      // along the front face, top to bottom
-const DEPTH: Point = [54, -42];    // front face to back face
+// from the same numbers. The front face is axis aligned: skewing it as well as
+// the depth made the shape read as a rhombus rather than a cube.
+const SIZE = 236;
+const ORIGIN: Point = [92, 116];
+const RIGHT: Point = [SIZE, 0];    // along the front face, left to right
+const DOWN: Point = [0, SIZE];     // along the front face, top to bottom
+const DEPTH: Point = [86, -66];    // front face to back face, up and to the right
 
 const at = (u: number, v: number, w = 0): Point => [
   ORIGIN[0] + u * RIGHT[0] + v * DOWN[0] + w * DEPTH[0],
@@ -59,26 +61,23 @@ export function HeroCube() {
           <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.55" />
           <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0" />
         </radialGradient>
-        <filter id="softGlow" x="-60%" y="-60%" width="220%" height="220%">
-          <feGaussianBlur stdDeviation="9" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
+        <radialGradient id="iconGlow">
+          <stop offset="0%" stopColor="currentColor" stopOpacity="0.5" />
+          <stop offset="70%" stopColor="currentColor" stopOpacity="0" />
+        </radialGradient>
       </defs>
 
       {/* Light pooling behind and under the box. */}
-      <ellipse cx="240" cy="205" rx="235" ry="205" fill="url(#cubeGlow)" />
-      <ellipse cx="225" cy="368" rx="140" ry="26" fill="url(#cubeGlow)" opacity="0.75" />
+      <ellipse cx="245" cy="200" rx="230" ry="200" fill="url(#cubeGlow)" />
+      <ellipse cx="210" cy="374" rx="145" ry="26" fill="url(#cubeGlow)" opacity="0.7" />
 
       {/* Perspective floor, drawn from the same vanishing direction. */}
-      <g stroke="#8b5cf6" strokeOpacity="0.24" strokeWidth="1">
+      <g stroke="#8b5cf6" strokeOpacity="0.22" strokeWidth="1">
         {[0, 1, 2, 3].map((i) => (
-          <line key={`h${i}`} x1={40 - i * 12} y1={300 + i * 26} x2={430 + i * 12} y2={252 + i * 26} />
+          <line key={`h${i}`} x1={30 - i * 10} y1={318 + i * 28} x2={440 + i * 10} y2={286 + i * 28} />
         ))}
         {[0, 1, 2, 3, 4, 5].map((i) => (
-          <line key={`v${i}`} x1={60 + i * 74} y1={296 + i * 4} x2={20 + i * 90} y2={410} />
+          <line key={`v${i}`} x1={70 + i * 72} y1={312} x2={30 + i * 88} y2={424} />
         ))}
       </g>
 
@@ -123,8 +122,11 @@ export function HeroCube() {
               strokeWidth="6"
               strokeLinejoin="round"
             />
-            <g transform={`translate(${cx - 21} ${cy - 21})`} color={color} filter="url(#softGlow)">
-              <Icon size={42} />
+            <g color={color}>
+              <circle cx={cx} cy={cy} r="34" fill="url(#iconGlow)" />
+              <g transform={`translate(${cx - 21} ${cy - 21})`}>
+                <Icon size={42} />
+              </g>
             </g>
           </g>
         );

@@ -31,6 +31,10 @@ function ReviewSection({ product }: { product: Product }) {
   } = useForm<ReviewForm>({ defaultValues: { authorName: "", rating: 5, title: "", body: "" } });
 
   const onSubmit = handleSubmit(async (values) => {
+    if (needsChallenge && !botToken) {
+      toast("Complete the bot check first, then submit the review.", "error");
+      return;
+    }
     try {
       await api("/reviews", {
         method: "POST",
@@ -111,11 +115,7 @@ function ReviewSection({ product }: { product: Product }) {
           <Turnstile siteKey={config.turnstile.siteKey} onToken={setBotToken} />
         ) : null}
 
-        <button
-          className="btn primary"
-          type="submit"
-          disabled={isSubmitting || submitted || (needsChallenge && !botToken)}
-        >
+        <button className="btn primary" type="submit" disabled={isSubmitting || submitted}>
           {submitted ? "Submitted for review" : isSubmitting ? "Sending…" : "Submit review"}
         </button>
       </form>
