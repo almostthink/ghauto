@@ -47,9 +47,13 @@ export const productSchema = z.object({
   longDescription: trimmed(20000).default(""),
   categoryId: z.string().uuid(),
   subcategoryId: z.string().uuid().nullable().optional(),
-  // rating, reviewCount, downloads and views are deliberately absent: they are
-  // derived from approved reviews and from real download and view events, so
-  // the API ignores anything a client sends for them.
+  // Figures shown on the catalog card. They are the administrator's to set,
+  // and the analytics screens deliberately ignore them: every number on the
+  // dashboard is counted from real events and approved reviews instead.
+  rating: z.coerce.number().min(0).max(5).optional(),
+  reviewCount: z.coerce.number().int().min(0).optional(),
+  downloads: z.coerce.number().int().min(0).optional(),
+  views: z.coerce.number().int().min(0).optional(),
   version: trimmed(40).default("1.0.0"),
   fileSize: trimmed(40).default(""),
   license: trimmed(60).default("Free"),

@@ -51,7 +51,8 @@ analyticsRouter.get("/overview", route(async (req, res) => {
     prisma.product.count({ where: { status: "published" } }),
     prisma.downloadEvent.count(),
     prisma.viewEvent.count(),
-    prisma.product.aggregate({ where: { reviewCount: { gt: 0 } }, _avg: { rating: true } }),
+    // From the reviews themselves, not from the rating typed on the product.
+    prisma.review.aggregate({ where: { status: "approved" }, _avg: { rating: true } }),
     prisma.downloadEvent.count({ where: { createdAt: { gte: startOfDay } } }),
     prisma.downloadEvent.count({ where: { createdAt: { gte: startOfWeek } } }),
     prisma.downloadEvent.count({ where: { createdAt: { gte: startOfMonth } } }),
@@ -157,17 +158,35 @@ analyticsRouter.get("/products", route(async (req, res) => {
     orderBy: { _count: { productId: "desc" } },
     take: limit
   });
-  const products = await prisma.product.findMany({
-    where: { id: { in: grouped.map((row) => row.productId) } },
-    select: {
-      id: true, name: true, slug: true, thumbnail: true, downloads: true, rating: true,
-      category: { select: { name: true, slug: true } }
-    }
-  });
-  const byId = new Map(products.map((product) => [product.id, product]));
+  const [products, lifetime] = await Promise.all([
+    prisma.product.findMany({
+      where: { id: { in: grouped.map((row) => row.productId) } },
+      select: {
+        id: true, name: true, slug: true, thumbnail: true, rating: true,
+        category: { select: { name: true, slug: true } }
+      }
+    }),
+    // Every recorded download for these products, not the catalog figure.
+    prisma.downloadEvent.groupBy({
+      by: ["productId"],
+      where: { productId: { in: grouped.map((row) => row.productId) } },
+      _count: { _all: true }
+    })
+  ]);
+  const lifetimeById = new Map(lifetime.map((row) => [row.productId, row._count._all]));
+  const byId = new Map(
+    products.map((product) => [product.id, { ...product, downloads: lifetimeById.get(product.id) ?? 0 }])
+  );
 
   const [byCategory, newProducts, reviewActivity] = await Promise.all([
-    prisma.product.groupBy({ by: ["categoryId"], _sum: { downloads: true } }),
+    // Counted from download events joined to their product's category, so an
+    // edited catalog figure cannot inflate the chart.
+    prisma.$queryRaw(Prisma.sql`
+      SELECT p."categoryId" AS "categoryId", count(*)::int AS downloads
+      FROM "DownloadEvent" e
+      JOIN "Product" p ON p.id = e."productId"
+      GROUP BY p."categoryId"
+    `),
     prisma.product.count({ where: { createdAt: { gte: start, lte: end } } }),
     prisma.review.count({ where: { createdAt: { gte: start, lte: end } } })
   ]);
@@ -183,7 +202,7 @@ analyticsRouter.get("/products", route(async (req, res) => {
         categoryId: row.categoryId,
         name: categoryName.get(row.categoryId)?.name ?? "Unknown",
         accent: categoryName.get(row.categoryId)?.accent ?? "#8b5cf6",
-        downloads: row._sum.downloads ?? 0
+        downloads: Number(row.downloads)
       }))
       .sort((a, b) => b.downloads - a.downloads),
     newProducts,

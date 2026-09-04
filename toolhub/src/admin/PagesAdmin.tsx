@@ -167,7 +167,14 @@ export function PagesAdmin() {
                   <option value="draft">Draft</option>
                 </select>
               </label>
-              <label className="wide">SEO title<input value={draft.seoTitle} onChange={(event) => setDraft({ ...draft, seoTitle: event.target.value })} /></label>
+              <label className="wide">
+                SEO title — the text shown in the browser tab and in search results
+                <input
+                  value={draft.seoTitle}
+                  placeholder="Leave empty to use the default from Settings → SEO"
+                  onChange={(event) => setDraft({ ...draft, seoTitle: event.target.value })}
+                />
+              </label>
               <label className="wide">
                 SEO description
                 <textarea rows={2} value={draft.seoDescription} onChange={(event) => setDraft({ ...draft, seoDescription: event.target.value })} />

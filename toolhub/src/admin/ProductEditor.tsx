@@ -8,7 +8,8 @@ import { ErrorState, Skeleton, useToast } from "../components/ui";
 import { adminUrl } from "../lib/config";
 import { formatBytes, formatNumber, formatRelative } from "../lib/format";
 import {
-  useCategories, useDeleteProductFile, useFileLimits, useProduct, useSaveProduct, useUploadProductFile
+  useCategories, useDeleteProductFile, useFileLimits, useMeasured, useProduct, useSaveProduct,
+  useUploadProductFile
 } from "../lib/queries";
 import type { ChangelogEntry, Product, ProductImage } from "../lib/types";
 import { AdminPanel, ImageField, PageHeading } from "./components";
@@ -28,6 +29,10 @@ interface FormValues {
   license: string;
   price: string;
   status: Product["status"];
+  rating: number;
+  reviewCount: number;
+  downloads: number;
+  views: number;
   featured: boolean;
   popular: boolean;
   verified: boolean;
@@ -46,6 +51,7 @@ const EMPTY: FormValues = {
   name: "", slug: "", shortDescription: "", longDescription: "", categoryId: "", subcategoryId: "",
   version: "1.0.0", fileSize: "", license: "Free", price: "Free", status: "draft",
   featured: false, popular: false, verified: false, downloadUrl: "", officialUrl: "", thumbnail: "",
+  rating: 0, reviewCount: 0, downloads: 0, views: 0,
   seoTitle: "", seoDescription: "", seoKeywords: "",
   tags: "", availabilityMode: "all", countryAvailability: ""
 };
@@ -62,6 +68,10 @@ const toForm = (product: Product): FormValues => ({
   license: product.license,
   price: product.price,
   status: product.status,
+  rating: product.rating,
+  reviewCount: product.reviewCount,
+  downloads: product.downloads,
+  views: product.views,
   featured: product.featured,
   popular: product.popular,
   verified: product.verified,
@@ -161,6 +171,10 @@ export function ProductEditor() {
     const payload = {
       ...formValues,
       subcategoryId: formValues.subcategoryId || null,
+      rating: Number(formValues.rating),
+      reviewCount: Number(formValues.reviewCount),
+      downloads: Number(formValues.downloads),
+      views: Number(formValues.views),
       seoKeywords: splitList(formValues.seoKeywords),
       tags: splitList(formValues.tags),
       countryAvailability: splitList(formValues.countryAvailability).map((code) => code.toUpperCase()),
@@ -323,19 +337,22 @@ export function ProductEditor() {
       ) : null}
 
       {tab === "Analytics" ? (
-        <AdminPanel title="Measured figures" subtitle="Counted from real activity, not editable">
-          <div className="counter-summary">
-            <div><b>{formatNumber(product?.downloads ?? 0)}</b><span>Downloads</span></div>
-            <div><b>{formatNumber(product?.views ?? 0)}</b><span>Views</span></div>
-            <div><b>{product?.rating ? product.rating.toFixed(2) : "—"}</b><span>Rating</span></div>
-            <div><b>{formatNumber(product?.reviewCount ?? 0)}</b><span>Approved reviews</span></div>
-          </div>
-          <p className="form-note">
-            Downloads and views are incremented by the download endpoint and the page-view beacon; the rating and review
-            count are recalculated whenever a review is approved or removed. They are shown here for reference and cannot
-            be typed in, so the dashboard only ever reports real activity.
-          </p>
-        </AdminPanel>
+        <>
+          <AdminPanel title="Catalog figures" subtitle="What visitors see on the card and the product page">
+            <div className="form-grid">
+              <label>Rating<input type="number" step="0.1" min="0" max="5" {...register("rating")} /></label>
+              <label>Review count<input type="number" min="0" {...register("reviewCount")} /></label>
+              <label>Downloads<input type="number" min="0" {...register("downloads")} /></label>
+              <label>Views<input type="number" min="0" {...register("views")} /></label>
+            </div>
+            <p className="form-note">
+              These are yours to set and are shown on the site. Real downloads are counted on top of the number you enter.
+              Approving or removing a review recalculates the rating and the review count from the approved reviews.
+            </p>
+          </AdminPanel>
+
+          {!isNew ? <MeasuredPanel id={id} /> : null}
+        </>
       ) : null}
 
       {tab === "Links" ? (
@@ -428,6 +445,26 @@ export function ProductEditor() {
         </button>
       </div>
     </form>
+  );
+}
+
+// The figures the analytics screens actually use, shown beside the editable
+// ones so the difference between the two is never a guess.
+function MeasuredPanel({ id }: { id: string | undefined }) {
+  const measured = useMeasured(id);
+  return (
+    <AdminPanel title="Measured activity" subtitle="Counted from real events — this is what the dashboard reports">
+      <div className="counter-summary">
+        <div><b>{formatNumber(measured.data?.downloads ?? 0)}</b><span>Downloads recorded</span></div>
+        <div><b>{formatNumber(measured.data?.views ?? 0)}</b><span>Views recorded</span></div>
+        <div><b>{measured.data?.rating ? measured.data.rating.toFixed(2) : "—"}</b><span>Rating from reviews</span></div>
+        <div><b>{formatNumber(measured.data?.reviews ?? 0)}</b><span>Approved reviews</span></div>
+      </div>
+      <p className="form-note">
+        Every number on Dashboard, Analytics, Downloads and Countries comes from figures like these, never from the catalog
+        values above, so editing a card cannot move the statistics.
+      </p>
+    </AdminPanel>
   );
 }
 

@@ -242,6 +242,14 @@ export function useSaveSettings() {
   });
 }
 
+// Real activity for one product: what the analytics screens count.
+export const useMeasured = (id: string | undefined) =>
+  useQuery({
+    queryKey: ["measured", id],
+    queryFn: () => api<{ downloads: number; views: number; reviews: number; rating: number }>(`/products/${id}/measured`),
+    enabled: Boolean(id)
+  });
+
 export const useFileLimits = () =>
   useQuery({
     queryKey: ["file-limits"],

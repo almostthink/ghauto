@@ -293,6 +293,26 @@ productsRouter.delete("/:id/file", requireAuth, route(async (req, res) => {
   res.json(serializeProduct(updated));
 }));
 
+// What actually happened for this product, as opposed to the figures typed
+// into the catalog. Used by the editor to show both side by side.
+productsRouter.get("/:id/measured", requireAuth, route(async (req, res) => {
+  const product = await prisma.product.findUnique({ where: { id: req.params.id }, select: { id: true } });
+  if (!product) throw notFound("Product not found");
+
+  const [downloads, views, reviews, rating] = await Promise.all([
+    prisma.downloadEvent.count({ where: { productId: product.id } }),
+    prisma.viewEvent.count({ where: { productId: product.id } }),
+    prisma.review.count({ where: { productId: product.id, status: "approved" } }),
+    prisma.review.aggregate({ where: { productId: product.id, status: "approved" }, _avg: { rating: true } })
+  ]);
+  res.json({
+    downloads,
+    views,
+    reviews,
+    rating: rating._avg.rating ? Number(rating._avg.rating.toFixed(2)) : 0
+  });
+}));
+
 // Limits the admin panel shows next to the upload control.
 productsRouter.get("/file/limits", requireAuth, (_req, res) => {
   res.json({ maxBytes: env.products.maxBytes, maxMb: Math.round(env.products.maxBytes / 1048576) });
