@@ -552,11 +552,33 @@ npm run db:reset                               # пересоздать и за�
 
 ## Storage
 
-`STORAGE_DRIVER=local` пишет в `server/uploads` (для разработки).
+`STORAGE_DRIVER=local` пишет в каталог из `UPLOADS_DIR` (по умолчанию
+`server/uploads`, это только для разработки).
 `STORAGE_DRIVER=s3` работает с любым S3-совместимым хранилищем: подпись
 SigV4 реализована напрямую, AWS SDK не нужен. Загрузка проверяет
 magic-number файла, а не заявленный `Content-Type`, и ограничена
 `UPLOAD_MAX_MB`.
+
+**Если при загрузке картинки в панели появляется ошибка про запись:** на боевом
+сервере `UPLOADS_DIR` и `PRODUCTS_DIR` должны указывать за пределы каталога с
+кодом, потому что systemd монтирует его только для чтения
+(`ProtectSystem=strict`, запись разрешена лишь в `ReadWritePaths`).
+
+```ini
+# .env
+UPLOADS_DIR=/var/lib/toolhub/uploads
+PRODUCTS_DIR=/var/lib/toolhub/products
+```
+
+```bash
+sudo mkdir -p /var/lib/toolhub/uploads /var/lib/toolhub/products
+sudo chown -R toolhub:toolhub /var/lib/toolhub
+sudo systemctl restart toolhub
+journalctl -u toolhub -n 20 --no-pager   # обе строки должны быть без WARNING
+```
+
+При старте сервер печатает, куда он пишет картинки и файлы продуктов, и ругается
+строкой `WARNING: cannot write to the ... directory`, если каталог недоступен.
 
 ## Безопасность
 

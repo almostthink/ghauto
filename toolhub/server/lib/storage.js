@@ -120,8 +120,19 @@ export async function putObject(buffer, declaredType, prefix = "products") {
   }
 
   const target = path.join(env.storage.localDir, key);
-  await fs.mkdir(path.dirname(target), { recursive: true });
-  await fs.writeFile(target, buffer);
+  try {
+    await fs.mkdir(path.dirname(target), { recursive: true });
+    await fs.writeFile(target, buffer);
+  } catch (diskError) {
+    // The usual cause is UPLOADS_DIR pointing inside the code tree, which the
+    // systemd sandbox mounts read-only. Say so instead of "Internal error".
+    throw new HttpError(
+      500,
+      `Cannot save the image to ${env.storage.localDir} (${diskError.code || "write failed"}). ` +
+        "Check UPLOADS_DIR in .env: it must be a writable directory outside the project, " +
+        "for example /var/lib/toolhub/uploads."
+    );
+  }
   return { url: `/uploads/${key}`, key, size: buffer.length, contentType: mime };
 }
 
@@ -134,6 +145,27 @@ export async function deleteObject(key) {
   const target = path.join(env.storage.localDir, key);
   if (!target.startsWith(env.storage.localDir)) throw new HttpError(400, "Invalid storage key");
   await fs.rm(target, { force: true });
+}
+
+// Startup probe: a directory that cannot be written to is a deployment
+// mistake, and finding it in the log beats finding it on the first upload.
+export async function checkLocalStorage(dir, label) {
+  if (env.storage.driver === "s3" && label === "uploads") return true;
+  try {
+    await fs.mkdir(dir, { recursive: true });
+    const probe = path.join(dir, `.write-test-${crypto.randomUUID()}`);
+    await fs.writeFile(probe, "ok");
+    await fs.rm(probe, { force: true });
+    console.log(`${label} directory: ${dir}`);
+    return true;
+  } catch (diskError) {
+    console.error(
+      `WARNING: cannot write to the ${label} directory ${dir} (${diskError.code || "unknown error"}). ` +
+        "It must be a writable directory outside the project, owned by the service user " +
+        "(UPLOADS_DIR and PRODUCTS_DIR in .env). Uploads will fail until then."
+    );
+    return false;
+  }
 }
 
 // Turns a stored public URL back into the key used by `deleteObject`.

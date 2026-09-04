@@ -6,6 +6,7 @@ import express from "express";
 import helmet from "helmet";
 import { env } from "./env.js";
 import { prisma } from "./db.js";
+import { checkLocalStorage } from "./lib/storage.js";
 import { escapeHtml } from "./lib/text.js";
 import { attachUser, csrfGuard } from "./middleware/auth.js";
 import { apiLimiter } from "./middleware/limits.js";
@@ -253,8 +254,10 @@ app.use((error, _req, res, _next) => {
   });
 });
 
-const server = app.listen(env.port, () => {
+const server = app.listen(env.port, async () => {
   console.log(`ToolHub API listening on http://localhost:${env.port}`);
+  await checkLocalStorage(env.storage.localDir, "uploads");
+  await checkLocalStorage(env.products.dir, "product files");
 });
 
 for (const signal of ["SIGINT", "SIGTERM"]) {
