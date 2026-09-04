@@ -30,7 +30,7 @@ seoRouter.get("/sitemap.xml", route(async (_req, res) => {
       orderBy: { updatedAt: "desc" },
       take: 5000
     }),
-    prisma.category.findMany({ where: { visible: true }, select: { slug: true, updatedAt: true } }),
+    prisma.category.findMany({ where: { visible: true, parentId: null }, select: { slug: true, updatedAt: true } }),
     prisma.page.findMany({ where: { status: "published" }, select: { slug: true, updatedAt: true } })
   ]);
 

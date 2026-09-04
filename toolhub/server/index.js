@@ -211,12 +211,19 @@ async function renderIndex(req, res) {
         };
       }
     } else {
-      const page = await prisma.page.findFirst({
-        where: { slug: req.path === "/" ? "home" : req.path.slice(1), status: "published" }
-      });
+      const slug = req.path === "/" ? "home" : req.path.slice(1);
+      const page = await prisma.page.findFirst({ where: { slug, status: "published" } });
       if (page) {
         meta.title = page.seoTitle || settings.seo.titleTemplate.replace("%s", page.title);
         meta.description = page.seoDescription || meta.description;
+      } else {
+        // A category added in the panel has no page of its own; it is still a
+        // real address, so it gets its own title rather than the site default.
+        const category = await prisma.category.findFirst({ where: { slug, visible: true } });
+        if (category) {
+          meta.title = category.seoTitle || settings.seo.titleTemplate.replace("%s", category.name);
+          meta.description = category.seoDescription || category.description || meta.description;
+        }
       }
     }
 

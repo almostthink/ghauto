@@ -1105,3 +1105,11 @@ td{font-size:13px;padding:15px 16px}
   .app-shell .filterbar .chip{flex:0 0 auto}
   .app-shell .filterbar select{margin-left:auto}
 }
+
+/* Small logos must never be upscaled into the product cover */
+.app-shell .product-cover{background:radial-gradient(circle at 50% 40%,#16203367,#0a1019)}
+.app-shell .product-cover.is-logo{display:grid;place-items:center;padding:28px}
+.app-shell .product-cover.is-logo img{width:auto;height:auto;
+  max-width:min(100%,196px);max-height:min(100%,196px);object-fit:contain}
+.app-shell .product-cover.is-logo .cover-glow{display:none}
+.app-shell .thumb img{object-fit:contain;padding:5px}

@@ -47,7 +47,10 @@ export function CategoriesAdmin() {
 
   return (
     <div className="dashboard">
-      <PageHeading title="Categories" text="The navigation, category pages and product grouping all read from this list.">
+      <PageHeading
+        title="Categories"
+        text="Navigation, category pages and product grouping all read from this list. A new category works on the site straight away; add a page with the same address under Pages only if you want to change its layout."
+      >
         <button type="button" className="btn primary" onClick={() => setEditing({ name: "", icon: "package", accent: "#8b5cf6", visible: true })}>
           <Plus size={16} /> New category
         </button>

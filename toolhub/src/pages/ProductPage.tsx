@@ -130,12 +130,18 @@ export function ProductPage() {
   const { data: settings } = useSettings();
   const [activeImage, setActiveImage] = useState(0);
   const [coverBroken, setCoverBroken] = useState(false);
+  const [coverIsLogo, setCoverIsLogo] = useState(false);
   const [reported, setReported] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
     if (product) trackView(`/product/${product.slug}`, product.id);
   }, [product]);
+
+  useEffect(() => {
+    setCoverBroken(false);
+    setCoverIsLogo(false);
+  }, [slug, activeImage]);
 
   useSeo({
     title: product?.seoTitle || (product ? `${product.name} — ToolHub` : "ToolHub"),
@@ -203,9 +209,18 @@ export function ProductPage() {
 
         <div className="product-hero-card">
           <div>
-            <div className="product-cover">
+            <div className={coverIsLogo ? "product-cover is-logo" : "product-cover"}>
               {cover && !coverBroken ? (
-                <img src={cover} alt={product.name} onError={() => setCoverBroken(true)} />
+                <img
+                  key={cover}
+                  src={cover}
+                  alt={product.name}
+                  onLoad={(event) => {
+                    const image = event.currentTarget;
+                    setCoverIsLogo(image.naturalWidth <= 400 || image.naturalHeight <= 400);
+                  }}
+                  onError={() => setCoverBroken(true)}
+                />
               ) : (
                 <div className="image-fallback large">
                   {product.name.replace(/[^A-Za-z0-9]/g, "").slice(0, 2).toUpperCase()}
