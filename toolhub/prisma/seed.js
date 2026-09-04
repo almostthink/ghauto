@@ -15,65 +15,18 @@ const PLACEHOLDER_SLUGS = [
 const prisma = new PrismaClient();
 
 const CATEGORIES = [
-  {
-    slug: "windows",
-    name: "Windows Tools",
-    icon: "windows",
-    accent: "#4da3ff",
-    position: 0,
+  { slug: "windows", name: "Windows Tools", icon: "windows", accent: "#4da3ff", position: 0,
     description: "System utilities, optimization and productivity software for Windows.",
-    children: ["Optimization", "Security", "Drivers", "Utilities"]
-  },
-
-  {
-    slug: "game",
-    name: "Game Tools",
-    icon: "gamepad",
-    accent: "#b98cff",
-    position: 1,
+    children: ["Optimization", "Security", "Drivers", "Utilities"] },
+  { slug: "game", name: "Game Tools", icon: "gamepad", accent: "#b98cff", position: 1,
     description: "Utilities that improve how you play, record and tune your games.",
-    children: ["Trainers", "Overlays", "Recording", "Mods", "Utilities"]
-  },
-
-  {
-    slug: "roblox",
-    name: "Roblox Tools",
-    icon: "roblox",
-    accent: "#e6ecff",
-    position: 2,
+    children: ["Trainers", "Overlays", "Recording", "Mods", "Utilities"] },
+  { slug: "roblox", name: "Roblox Tools", icon: "roblox", accent: "#e6ecff", position: 2,
     description: "Studio helpers, asset utilities and quality-of-life tools for Roblox creators.",
-    children: ["Studio", "Assets", "Utilities"]
-  },
-
-  {
-    slug: "roblox-executors",
-    name: "Roblox Executors",
-    icon: "roblox",
-    accent: "#ff6b8a",
-    position: 3,
-    description: "Third-party Roblox executor listings with version and compatibility metadata.",
-    children: ["Executors"]
-  },
-
-  {
-    slug: "gamecheats",
-    name: "GameCheats",
-    icon: "gamepad",
-    accent: "#ff5f7a",
-    position: 4,
-    description: "Third-party game modification and cheat software listings.",
-    children: ["Cheats"]
-  },
-
-  {
-    slug: "crypto",
-    name: "Crypto Tools",
-    icon: "ethereum",
-    accent: "#9d7bff",
-    position: 5,
+    children: ["Studio", "Assets", "Utilities"] },
+  { slug: "crypto", name: "Crypto Tools", icon: "ethereum", accent: "#9d7bff", position: 3,
     description: "Wallets, portfolio trackers and on-chain analytics.",
-    children: ["Wallets", "Analytics", "Trading", "Security"]
-  }
+    children: ["Wallets", "Analytics", "Trading", "Security"] }
 ];
 
 const FAQ_ITEMS = [
