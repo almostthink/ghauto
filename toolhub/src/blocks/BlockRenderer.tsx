@@ -4,7 +4,7 @@ import {
   ArrowRight, BadgeCheck, ChevronDown, Check, Download, Mail, Package,
   RefreshCw, Search, ShieldCheck, Sparkles, Star, Users
 } from "lucide-react";
-import { EthereumMark, GamepadMark, RobloxMark, WindowsMark } from "../components/BrandIcons";
+import { HeroCube } from "../components/HeroCube";
 import { CategoryIcon } from "../components/icons";
 import { ProductCard, ProductRow } from "../components/ProductCard";
 import { EmptyState, ErrorState, SkeletonCards, useDebounced } from "../components/ui";
@@ -86,21 +86,9 @@ function HeroBlock({ data }: { data: Data }) {
           {image ? (
             <img className="hero-image" src={image} alt="" />
           ) : (
-            // A real 3D box: the front face carries the four platforms, and the
-            // top and side faces catch the light, over a perspective floor.
-            <div className="cube-scene">
-              <div className="cube-floor" />
-              <div className="cube3d">
-                <div className="cube-face cube-front">
-                  <span className="tile windows"><WindowsMark size={38} /></span>
-                  <span className="tile game"><GamepadMark size={38} /></span>
-                  <span className="tile crypto"><EthereumMark size={38} /></span>
-                  <span className="tile roblox"><RobloxMark size={38} /></span>
-                </div>
-                <div className="cube-face cube-top" />
-                <div className="cube-face cube-side" />
-              </div>
-            </div>
+            // Vector artwork: the faces share vertices, so the box cannot come
+            // apart at the seams the way stacked CSS planes did.
+            <HeroCube />
           )}
         </div>
       </div>
