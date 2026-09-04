@@ -104,8 +104,9 @@ PRODUCT_FILE_MAX_MB=512
 STORAGE_DRIVER=local
 UPLOADS_DIR=/var/lib/toolhub/uploads
 
+# Латиницей: кириллица в адресе сделает аккаунт, в который нельзя войти
 SEED_ADMIN_EMAIL="you@example.com"
-SEED_ADMIN_PASSWORD="временный-пароль-смените-после-входа"
+SEED_ADMIN_PASSWORD="TempPass12345"
 ```
 
 `PRODUCTS_DIR` и `UPLOADS_DIR` должны лежать вне каталога с кодом: systemd-юнит

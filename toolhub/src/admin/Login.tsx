@@ -38,7 +38,9 @@ export function Login() {
 
   return (
     <div className="login-shell">
-      <form className="login-card" onSubmit={onSubmit}>
+      {/* noValidate: the browser's own bubble can block submission without
+          showing anything, so validation is reported in the form instead. */}
+      <form className="login-card" onSubmit={onSubmit} noValidate>
         <div className="login-mark"><KeyRound size={20} /></div>
         <h1>Staff sign in</h1>
         <p>This area is restricted. Sign in with your ToolHub staff account.</p>
@@ -48,7 +50,15 @@ export function Login() {
           <input
             type="email"
             autoComplete="username"
-            {...register("email", { required: "Email is required" })}
+            {...register("email", {
+              required: "Email is required",
+              // ASCII only: the API rejects anything else, and a browser can
+              // silently refuse to submit a field it considers invalid.
+              pattern: {
+                value: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/,
+                message: "Enter a valid email address, latin letters only"
+              }
+            })}
             placeholder="you@toolhub.local"
           />
           {errors.email ? <em className="field-error">{errors.email.message}</em> : null}

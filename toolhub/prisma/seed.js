@@ -174,6 +174,14 @@ async function main() {
 
   // A single administrator account; the panel has no staff management.
   const adminEmail = env.seed.adminEmail.toLowerCase();
+  // Catch an address that would create an account nobody can sign in to: the
+  // sign-in form and the API both require a plain ASCII email.
+  if (!/^[\x20-\x7e]+$/.test(adminEmail) || !/^[^\s@]+@[^\s@.]+\.[^\s@]+$/.test(adminEmail)) {
+    throw new Error(
+      `SEED_ADMIN_EMAIL is not a valid email address: "${env.seed.adminEmail}". ` +
+      "Use a plain address such as you@example.com, then run the seed again."
+    );
+  }
   await prisma.user.upsert({
     where: { email: adminEmail },
     update: {},

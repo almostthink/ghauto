@@ -41,11 +41,13 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
   const payload = text ? (JSON.parse(text) as Record<string, unknown>) : {};
 
   if (!response.ok) {
-    throw new ApiError(
-      response.status,
-      (payload.error as string) || `Request failed (${response.status})`,
-      payload.details as { path: string; message: string }[] | undefined
-    );
+    const details = payload.details as { path: string; message: string }[] | undefined;
+    let message = (payload.error as string) || `Request failed (${response.status})`;
+    // Name the offending field rather than leaving a bare "Validation failed".
+    if (details?.length) {
+      message += `: ${details.map((d) => (d.path ? `${d.path} — ${d.message}` : d.message)).join(", ")}`;
+    }
+    throw new ApiError(response.status, message, details);
   }
   return payload as T;
 }
