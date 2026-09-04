@@ -225,7 +225,18 @@ sudo -u toolhub git pull
 cd toolhub
 sudo -u toolhub npm ci
 sudo -u toolhub npm run db:migrate
-sudo -u toolhub VITE_ADMIN_PATH=/p-7f3a91 npm run build
+sudo -u toolhub env VITE_ADMIN_PATH=/p-7f3a91 npm run build
+sudo systemctl restart toolhub
+```
+
+`npm run db:migrate` применяет миграции **и заново генерирует Prisma-клиент**.
+Пропустить генерацию нельзя: после переименования колонки клиент из
+`node_modules` продолжит запрашивать старое имя, и каждый запрос к базе будет
+падать с `Internal server error`. Если такое случилось, лечится так:
+
+```bash
+cd /opt/toolhub/src/toolhub
+sudo -u toolhub npx prisma generate
 sudo systemctl restart toolhub
 ```
 
