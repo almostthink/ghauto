@@ -188,7 +188,14 @@ export interface TopProduct {
 }
 
 export interface Settings {
-  site: { name: string; tagline: string; supportEmail: string; searchPlaceholder: string };
+  site: {
+    name: string;
+    tagline: string;
+    supportEmail: string;
+    searchPlaceholder: string;
+    headerCtaLabel: string;
+    headerCtaHref: string;
+  };
   seo: {
     titleTemplate: string;
     defaultTitle: string;

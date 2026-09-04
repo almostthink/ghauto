@@ -33,10 +33,11 @@ function Logo({ product, size = "card" }: { product: Product; size?: "card" | "r
 export function ProductCard({ product, showDownloads = true }: { product: Product; showDownloads?: boolean }) {
   return (
     <Link className="product-card" to={`/product/${product.slug}`}>
-      <div className="product-card-top">
+      {/* The image is the anchor of the card, so it gets its own panel. */}
+      <div className="product-media">
         <Logo product={product} />
         {product.verified ? (
-          <span className="verified-dot" title="Verified entry"><BadgeCheck size={13} /></span>
+          <span className="verified-dot" title="Verified entry"><BadgeCheck size={14} /></span>
         ) : null}
       </div>
 
@@ -44,16 +45,19 @@ export function ProductCard({ product, showDownloads = true }: { product: Produc
       <span className="category-chip">{product.subcategory?.name ?? product.category?.name ?? "Tool"}</span>
 
       <div className="rating">
-        <Star size={12} fill="currentColor" />
+        <Star size={14} fill="currentColor" />
         <b>{product.rating ? product.rating.toFixed(1) : "New"}</b>
         <span>({formatCompact(product.reviewCount)})</span>
       </div>
 
+      {showDownloads ? (
+        <small className="card-downloads"><Download size={12} /> {formatCompact(product.downloads)} downloads</small>
+      ) : null}
+
       <div className="product-card-foot">
         <span className="price">{product.price}</span>
-        <span className="download-chip" aria-hidden="true"><Download size={13} /></span>
+        <span className="download-chip" aria-hidden="true"><Download size={15} /></span>
       </div>
-      {showDownloads ? <small className="card-downloads">{formatCompact(product.downloads)} downloads</small> : null}
     </Link>
   );
 }

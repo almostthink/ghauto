@@ -699,3 +699,292 @@ body{background:radial-gradient(circle at 74% -12%,#43248a2e,transparent 38%),va
 /* Equal card heights in a row, whatever the name length. */
 .product-grid{align-items:stretch}
 .product-card{height:100%}
+
+/* ==========================================================================
+   Design system pass: the public site was built at too small a scale. Wider
+   container, larger type, taller header and hero, product cards that read as
+   marketplace listings. Scoped to .app-shell (or public-only classes) so the
+   admin panel keeps its own denser scale.
+   ========================================================================== */
+
+:root{
+  --bg:#050810;
+  --bg-alt:#080c16;
+  --surface:#101827;
+  --surface-hi:#141d30;
+  --line:#1e2a40;
+  --line-soft:#172132;
+  --purple:#8b5cf6;
+  --purple-deep:#7c3aed;
+  --text:#ffffff;
+  --muted:#94a3b8;
+}
+
+/* --- Width and rhythm ---------------------------------------------------- */
+.app-shell .container{width:min(1360px,calc(100% - 56px))}
+.app-shell .narrow{width:min(860px,calc(100% - 56px))}
+.app-shell .section{padding:72px 0}
+.app-shell .section.alt{background:var(--bg-alt)}
+.app-shell main > .section:first-child{padding-top:56px}
+
+/* --- Typography ---------------------------------------------------------- */
+.app-shell{font-size:15px}
+.app-shell p{color:var(--muted)}
+.app-shell .section-head h2{font-size:28px;letter-spacing:-.8px;margin:0 0 8px}
+.app-shell .section-head p{font-size:14.5px;margin:0}
+.app-shell .section-head > a{font-size:14px;font-weight:600;color:#a78bfa}
+.app-shell .eyebrow{font-size:11.5px;letter-spacing:1.4px}
+
+/* --- Header -------------------------------------------------------------- */
+.topbar{height:74px}
+.topbar .nav{gap:34px}
+.topbar .brand{font-size:19px;gap:11px}
+.topbar .brand-mark{width:38px;height:38px;border-radius:11px}
+.topbar .brand-mark svg{width:22px;height:22px}
+.nav-links{gap:26px;margin-left:8px}
+.nav-links a{font-size:14.5px;padding:8px 0}
+.nav-links a:hover{color:#e2e8f0}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.search-mini{margin-left:0;width:280px;height:44px;border-radius:12px;font-size:13.5px;gap:10px;padding:0 14px}
+.search-mini kbd{font-size:10px;padding:3px 6px}
+.header-cta{height:44px;padding:0 22px;font-size:14px;border-radius:12px}
+
+/* --- Hero ---------------------------------------------------------------- */
+.hero{min-height:440px;padding:56px 0 64px;display:flex;align-items:center}
+.hero-copy{width:52%}
+.hero-badge{height:32px;padding:0 16px;font-size:12px;letter-spacing:.9px}
+.hero h1{font-size:62px;line-height:1.04;letter-spacing:-2.6px;margin:24px 0 18px}
+.hero p{font-size:16px;line-height:1.7;max-width:560px}
+.hero-actions{margin-top:30px;gap:14px}
+.hero-actions .btn{height:52px;padding:0 26px;font-size:14.5px;border-radius:12px}
+.trust-row{margin-top:34px;padding-top:26px;gap:28px}
+.trust-row span{font-size:13.5px}
+.trust-row svg{width:17px;height:17px}
+
+/* --- Category cards ------------------------------------------------------ */
+.category-grid{gap:20px}
+.category-card{min-height:218px;padding:26px;border-radius:16px}
+.category-card .cat-icon{width:60px;height:60px;border-radius:16px;margin-bottom:20px}
+.category-card .cat-icon svg{width:30px;height:30px}
+.category-card h3{font-size:19px;letter-spacing:-.4px;margin:0 0 10px}
+.category-card p{font-size:14.5px;line-height:1.6;min-height:46px;margin:0 0 20px}
+.category-foot b{font-size:15px}
+.round-arrow{width:34px;height:34px}
+.round-arrow svg{width:16px;height:16px}
+
+/* --- Product cards ------------------------------------------------------- */
+.product-grid{grid-template-columns:repeat(auto-fill,minmax(216px,1fr));gap:18px}
+.product-card{padding:18px;gap:12px;border-radius:16px;min-height:302px}
+.product-media{
+  position:relative;width:100%;height:118px;border-radius:13px;display:grid;place-items:center;
+  background:linear-gradient(160deg,#16203354,#0c1322);border:1px solid var(--line-soft);
+}
+.product-card .product-logo{width:78px;height:78px;border-radius:18px;object-fit:contain;background:transparent;border:0}
+.product-card .product-logo.monogram{font-size:24px;background:linear-gradient(145deg,#1d2740,#121a2a);border:1px solid #ffffff12}
+.verified-dot{right:8px;bottom:8px;width:24px;height:24px}
+.product-card h3{font-size:17px;min-height:44px;letter-spacing:-.3px;line-height:1.25}
+.product-card .category-chip{font-size:11.5px;padding:5px 11px;border-radius:7px}
+.product-card .rating{font-size:13.5px;gap:6px}
+.product-card .rating b{font-size:14px}
+.card-downloads{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#64748b}
+.product-card-foot{padding-top:14px}
+.product-card-foot .price{font-size:14px;font-weight:600}
+.download-chip{width:38px;height:38px;border-radius:11px}
+
+/* Rows on catalog pages grow with the same system. */
+.product-row{grid-template-columns:64px 1fr 130px 120px 96px;gap:20px;padding:16px;border-radius:14px}
+.product-row .product-logo.row{width:64px;height:64px;border-radius:15px;flex-basis:64px}
+.row-main h3{font-size:16.5px;margin:0 0 6px}
+.row-main p{font-size:13.5px;margin:0 0 9px}
+.tag,.status-pill{font-size:11.5px;padding:5px 9px}
+.row-rating,.row-downloads{font-size:13.5px}
+.small-btn{height:38px;font-size:12.5px;border-radius:9px;padding:0 14px}
+
+/* --- Filters ------------------------------------------------------------- */
+.app-shell .filterbar{padding:20px 0;gap:14px}
+.app-shell .searchbox{height:46px;border-radius:12px;font-size:14px}
+.app-shell .searchbox input{font-size:14px}
+.app-shell .filterbar .searchbox{width:340px}
+.app-shell .chip,.app-shell .filterbar select{height:42px;font-size:13px;border-radius:11px;padding:0 16px}
+.app-shell .catalog-meta{font-size:13px;padding:20px 0}
+
+/* --- Statistics ---------------------------------------------------------- */
+.stats-section{padding:0 0 8px}
+.stats-grid{gap:18px;padding:26px 28px;border-radius:18px}
+.stat-tile{gap:15px}
+.stat-icon{width:50px;height:50px;flex-basis:50px;border-radius:14px}
+.stat-icon svg{width:22px;height:22px}
+.stat-tile b{font-size:27px;letter-spacing:-.8px}
+.stat-tile > div span{font-size:13px;margin-top:5px;color:var(--muted)}
+
+/* --- Newsletter ---------------------------------------------------------- */
+.newsletter-panel{gap:24px;padding:34px 36px;border-radius:20px}
+.newsletter-icon{width:68px;height:68px;flex-basis:68px;border-radius:19px}
+.newsletter-icon svg{width:28px;height:28px}
+.newsletter-panel h2{font-size:24px;letter-spacing:-.6px;margin:0 0 7px}
+.newsletter-panel p{font-size:14.5px}
+.wide-newsletter{width:min(460px,100%)}
+.wide-newsletter input{height:52px;border-radius:13px 0 0 13px;font-size:14px;padding:0 18px}
+.wide-newsletter button{height:52px;padding:0 26px;border-radius:0 13px 13px 0;font-size:14px}
+
+/* --- Footer -------------------------------------------------------------- */
+.app-shell footer{padding:64px 0 26px;background:var(--bg-alt)}
+.footer-grid{gap:52px}
+.footer-grid b{font-size:15px;margin-bottom:18px}
+.footer-grid a,.footer-grid span{font-size:14px;margin:12px 0}
+.footer-grid a:hover{color:#c4b5fd}
+.footer-grid p{font-size:14px;line-height:1.7}
+.footer-grid .brand{font-size:19px}
+.footer-grid .brand .brand-mark{width:38px;height:38px;border-radius:11px}
+.footer-grid .brand .brand-mark svg{width:22px;height:22px}
+.social-chip{width:40px;height:40px;border-radius:11px}
+.social-chip svg{width:17px;height:17px}
+.status-card{padding:20px;border-radius:14px}
+.status-card b{font-size:14px;margin-bottom:14px}
+.status-line{font-size:13px;margin:11px 0}
+.copyright{font-size:13px;padding-top:24px;margin-top:44px}
+
+/* --- Product page -------------------------------------------------------- */
+.app-shell .breadcrumbs{font-size:13px;margin-bottom:26px}
+.app-shell .product-hero-card{padding:32px;border-radius:20px;gap:44px}
+.app-shell .product-info h1{font-size:44px;letter-spacing:-1.6px}
+.app-shell .product-info > p{font-size:15.5px}
+.app-shell .detail-stats b{font-size:17px}
+.app-shell .detail-stats span{font-size:12px}
+.app-shell .panel{padding:28px;border-radius:16px}
+.app-shell .panel h2{font-size:22px;margin-bottom:16px}
+.app-shell .panel p,.app-shell .feature-grid div,.app-shell .check-line{font-size:14.5px;line-height:1.75}
+.app-shell .info-line{font-size:13.5px;padding:14px 0}
+.app-shell .faq-item button{font-size:16px;padding:22px}
+.app-shell .faq-item p{font-size:14.5px;padding:0 22px 22px}
+.app-shell .page-intro h1,.app-shell .catalog-title h1{font-size:46px;letter-spacing:-1.8px}
+.app-shell .page-intro p{font-size:16px}
+
+/* --- Responsive ---------------------------------------------------------- */
+@media(max-width:1200px){
+  .app-shell .container{width:calc(100% - 48px)}
+  .product-grid{grid-template-columns:repeat(3,1fr)}
+  .category-grid{grid-template-columns:repeat(2,1fr)}
+  .hero h1{font-size:52px}
+}
+@media(max-width:900px){
+  .app-shell .container,.app-shell .narrow{width:calc(100% - 40px)}
+  .app-shell .section{padding:52px 0}
+  .hero{min-height:auto;padding:36px 0 44px}
+  .hero h1{font-size:44px;letter-spacing:-1.6px}
+  .hero p{font-size:15px}
+  .nav-right .header-cta{display:none}
+  .footer-grid{gap:32px}
+}
+@media(max-width:700px){
+  .app-shell .container,.app-shell .narrow{width:calc(100% - 32px)}
+  .product-grid{grid-template-columns:repeat(2,1fr);gap:12px}
+  .category-grid{grid-template-columns:1fr}
+  .product-card{min-height:270px;padding:14px;gap:10px}
+  .product-media{height:96px}
+  .product-card .product-logo{width:62px;height:62px}
+  .product-card h3{font-size:15px;min-height:38px}
+  .hero h1{font-size:36px}
+  .app-shell .product-info h1,.app-shell .page-intro h1,.app-shell .catalog-title h1{font-size:32px}
+  .stats-grid{grid-template-columns:1fr 1fr;padding:18px}
+  .stat-tile b{font-size:22px}
+  .newsletter-panel{padding:22px}
+  .app-shell .section-head h2{font-size:23px}
+}
+
+/* Six cards to a row at desktop width, as in the reference. */
+.product-grid{grid-template-columns:repeat(auto-fill,minmax(206px,1fr))}
+.footer-grid{grid-template-columns:1.5fr .8fr .8fr .8fr 1.2fr}
+@media(max-width:1200px){.product-grid{grid-template-columns:repeat(3,1fr)}.footer-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.product-grid{grid-template-columns:repeat(2,1fr)}.footer-grid{grid-template-columns:1fr}}
+
+/* Section rhythm: each section carries half the gap, so neighbours add up to
+   the intended spacing instead of stacking two full paddings. */
+.app-shell .section{padding:36px 0}
+.app-shell main > .section:first-child{padding-top:44px}
+.app-shell .stats-section{padding:24px 0}
+.app-shell .hero{padding:52px 0 40px}
+.app-shell footer{padding:48px 0 24px}
+.app-shell .section.catalog:last-of-type{padding-bottom:48px}
+
+/* Measured gaps, tuned to the target rhythm. */
+.app-shell .hero{padding-bottom:32px}
+.app-shell .stats-section{padding:8px 0}
+.app-shell .newsletter-section{padding-top:18px}
+
+/* Measured against the target dimensions: hero, product and category cards
+   were all running tall. */
+.app-shell .hero{min-height:400px;padding:40px 0 28px}
+.app-shell .hero-art{height:360px}
+.app-shell .cube-scene{width:340px;height:340px}
+.app-shell .cube3d{width:232px;height:232px}
+.app-shell .cube-front{width:232px;height:232px;transform:translate(-50%,-50%) translateZ(58px);padding:22px;gap:14px}
+.app-shell .cube-top{width:232px;height:116px;transform:translate(-50%,-50%) rotateX(90deg) translateZ(116px)}
+.app-shell .cube-side{width:116px;height:232px;transform:translate(-50%,-50%) rotateY(90deg) translateZ(116px)}
+.app-shell .hero h1{font-size:58px;margin:20px 0 16px}
+.app-shell .trust-row{margin-top:26px;padding-top:22px}
+
+.category-card{min-height:auto;padding:24px}
+.category-card .cat-icon{width:54px;height:54px;border-radius:15px;margin-bottom:16px}
+.category-card .cat-icon svg{width:27px;height:27px}
+.category-card h3{margin:0 0 8px}
+/* Two lines keeps every card the same height whatever the copy. */
+.category-card p{min-height:auto;margin:0 0 16px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+.product-card{min-height:auto;padding:16px;gap:9px}
+.product-media{height:104px;border-radius:12px}
+.product-card .product-logo{width:66px;height:66px;border-radius:16px}
+.product-card h3{min-height:40px;font-size:16.5px}
+.product-card-foot{padding-top:11px}
+.download-chip{width:36px;height:36px}
+
+/* Final trim into the target card dimensions. */
+.product-card{gap:8px;padding:15px}
+.product-media{height:94px}
+.product-card .product-logo{width:60px;height:60px;border-radius:15px}
+.product-card h3{min-height:38px;margin:0}
+.product-card-foot{padding-top:10px}
+.category-card{padding:22px}
+.category-card .cat-icon{width:48px;height:48px;border-radius:14px;margin-bottom:14px}
+.category-card .cat-icon svg{width:25px;height:25px}
+.category-card p{margin:0 0 14px}
+
+/* --- Overflow fixes (measured at 1024 and 375) --------------------------- */
+
+/* The cube floor and glow are deliberately wider than the art column; they
+   must be clipped rather than pushing the page sideways. */
+.app-shell .hero{overflow:hidden}
+
+/* Below ~1100 the header no longer fits brand + nav + search + button. */
+@media(max-width:1180px){
+  .search-mini{width:210px}
+  .search-mini kbd{display:none}
+  .topbar .nav{gap:22px}
+  .nav-links{gap:18px}
+}
+@media(max-width:1040px){.nav-right .header-cta{display:none}}
+
+@media(max-width:700px){
+  /* Two buttons side by side only fit with tighter padding. */
+  .app-shell .hero-actions{flex-wrap:wrap}
+  .app-shell .hero-actions .btn{padding:0 14px;font-size:13.5px;min-width:0}
+  /* The subscribe form stacks instead of squeezing the button off-screen. */
+  .newsletter-panel form.wide-newsletter{flex-wrap:wrap;gap:8px;width:100%}
+  .wide-newsletter input{border-radius:12px;width:100%;flex:1 0 100%}
+  .wide-newsletter button{border-radius:12px;width:100%;padding:0}
+}
+
+/* The header search no longer fits next to the full nav below ~900, and the
+   new five-column product row must collapse on phones: both rules here come
+   after the ones they correct, since media queries add no specificity. */
+@media(max-width:900px){
+  .search-mini{width:46px;padding:0;justify-content:center}
+  .search-mini span{display:none}
+}
+@media(max-width:700px){
+  .product-row{grid-template-columns:56px 1fr;gap:12px;padding:12px}
+  .product-row .product-logo.row{width:56px;height:56px;flex-basis:56px}
+  .row-rating,.row-downloads,.small-btn{display:none}
+  .row-main h3{font-size:15px}
+  .row-main p{font-size:13px}
+}

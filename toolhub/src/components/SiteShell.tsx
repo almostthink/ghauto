@@ -149,7 +149,14 @@ function Header() {
           <NavLink to="/faq">FAQ</NavLink>
           <NavLink to="/about">About</NavLink>
         </nav>
-        <GlobalSearch placeholder={settings?.site.searchPlaceholder ?? "Search tools..."} />
+        <div className="nav-right">
+          <GlobalSearch placeholder={settings?.site.searchPlaceholder ?? "Search tools..."} />
+          {settings?.site.headerCtaLabel ? (
+            <Link className="btn primary header-cta" to={settings.site.headerCtaHref || "/"}>
+              {settings.site.headerCtaLabel}
+            </Link>
+          ) : null}
+        </div>
       </div>
     </header>
   );
@@ -185,9 +192,14 @@ function Footer() {
         {(footer?.columns ?? []).map((column) => (
           <div key={column.title}>
             <b>{column.title}</b>
-            {column.links.map((link) => (
-              <Link key={link.href + link.label} to={link.href}>{link.label}</Link>
-            ))}
+            {column.links.map((link) =>
+              // A mailto or an external address is not a route.
+              /^(https?:|mailto:|tel:)/.test(link.href) ? (
+                <a key={link.href + link.label} href={link.href}>{link.label}</a>
+              ) : (
+                <Link key={link.href + link.label} to={link.href}>{link.label}</Link>
+              )
+            )}
           </div>
         ))}
         <div className="status-card">

@@ -427,7 +427,7 @@ function CtaBlock({ data }: { data: Data }) {
 function NewsletterBlock({ data }: { data: Data }) {
   const [done, setDone] = useState(false);
   return (
-    <section className="section">
+    <section className="section newsletter-section">
       <div className="container">
         <div className="newsletter-panel">
           <span className="newsletter-icon"><Mail size={20} /></span>

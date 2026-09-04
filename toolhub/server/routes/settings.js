@@ -15,7 +15,10 @@ export const DEFAULT_SETTINGS = {
     name: "ToolHub",
     tagline: "Ultimate Tools Collection",
     supportEmail: "hello@toolhub.local",
-    searchPlaceholder: "Search tools..."
+    searchPlaceholder: "Search tools...",
+    // The purple call to action in the header. Clear the label to hide it.
+    headerCtaLabel: "Browse Tools",
+    headerCtaHref: "/windows"
   },
   seo: {
     titleTemplate: "%s — ToolHub",
@@ -38,6 +41,10 @@ export const DEFAULT_SETTINGS = {
       { title: "Company", links: [
         { label: "About", href: "/about" },
         { label: "FAQ", href: "/faq" }
+      ] },
+      { title: "Support", links: [
+        { label: "Help center", href: "/faq" },
+        { label: "Contact", href: "mailto:hello@toolhub.local" }
       ] }
     ],
     newsletter: { title: "Newsletter", text: "Get useful updates in your inbox.", placeholder: "Your email" }

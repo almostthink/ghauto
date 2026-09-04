@@ -57,6 +57,22 @@ export function SettingsAdmin() {
           <label>Tagline<input value={draft.site.tagline} onChange={(event) => setDraft({ ...draft, site: { ...draft.site, tagline: event.target.value } })} /></label>
           <label>Support email<input value={draft.site.supportEmail} onChange={(event) => setDraft({ ...draft, site: { ...draft.site, supportEmail: event.target.value } })} /></label>
           <label>Search placeholder<input value={draft.site.searchPlaceholder} onChange={(event) => setDraft({ ...draft, site: { ...draft.site, searchPlaceholder: event.target.value } })} /></label>
+          <label>
+            Header button label
+            <input
+              value={draft.site.headerCtaLabel}
+              placeholder="Leave empty to hide the button"
+              onChange={(event) => setDraft({ ...draft, site: { ...draft.site, headerCtaLabel: event.target.value } })}
+            />
+          </label>
+          <label>
+            Header button link
+            <input
+              value={draft.site.headerCtaHref}
+              placeholder="/windows"
+              onChange={(event) => setDraft({ ...draft, site: { ...draft.site, headerCtaHref: event.target.value } })}
+            />
+          </label>
         </div>
       </AdminPanel>
 
