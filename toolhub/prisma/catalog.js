@@ -521,7 +521,7 @@ export const CATALOG = [
     requirements: ["Any modern browser", "A wallet address to watch"]
   },
   {
-    name: "TradingView", category: "crypto", sub: "Trading", price: "Freemium",
+    name: "TradingView", category: "crypto", sub: "Trading", price: "Free",
     site: "tradingview.com", version: "2.9 (desktop)", size: "148 MB", rating: 4.7, downloads: 152800,
     tags: ["charts", "trading"],
     short: "Charting platform used across crypto and traditional markets.",
@@ -595,7 +595,7 @@ export const CATALOG = [
     requirements: ["Windows 10 or 11", "Counter-Strike 2 or a Source game"]
   },
   {
-    name: "Blitz", category: "game", sub: "Utilities", price: "Freemium",
+    name: "Blitz", category: "game", sub: "Utilities", price: "Premium",
     site: "blitz.gg", version: "3.24", size: "160 MB", rating: 4.2, downloads: 84300,
     tags: ["valorant", "stats", "overlay"],
     short: "Companion app with stats, lineups and post-match review.",
@@ -604,7 +604,7 @@ export const CATALOG = [
     requirements: ["Windows 10 or 11", "Publisher account for match history"]
   },
   {
-    name: "Tracker Network", category: "game", sub: "Utilities", price: "Freemium",
+    name: "Tracker Network", category: "game", sub: "Utilities", price: "Premium",
     site: "tracker.gg", version: "4.2", size: "120 MB", rating: 4.3, downloads: 71500,
     tags: ["fortnite", "stats", "overlay"],
     short: "Match statistics and overlay for Fortnite, Apex and more.",
@@ -736,7 +736,7 @@ export const CATALOG = [
 
   // ---------------------------------------------------------------- Games / Executors additions
   {
-    name: "Midnight Rage Legit", category: "gamecheats", sub: "Legit",
+    name: "Midnight Rage Legit", category: "gamecheats", sub: "Cheats",
     price: "Paid", site: "midnight.im", version: "Latest",
     size: "120 MB", rating: 4.8, downloads: 95000,
     tags: ["cs2", "legit", "counter-strike"],
@@ -746,7 +746,7 @@ export const CATALOG = [
     requirements: ["Windows 10 or 11", "Counter-Strike 2 installed"]
   },
   {
-    name: "Neverlose", category: "gamecheats", sub: "Premium",
+    name: "Neverlose", category: "gamecheats", sub: "Cheats",
     price: "Paid", site: "neverlose.cc", version: "Latest",
     size: "150 MB", rating: 4.7, downloads: 140000,
     tags: ["cs2", "premium", "configs"],
@@ -756,7 +756,7 @@ export const CATALOG = [
     requirements: ["Windows 10 or 11", "Counter-Strike 2 installed"]
   },
   {
-    name: "Kiddion's Modest Menu", category: "gamecheats", sub: "Utilities",
+    name: "Kiddion's Modest Menu", category: "gamecheats", sub: "Cheats",
     price: "Free", site: "github.com", version: "Latest",
     size: "20 MB", rating: 4.8, downloads: 220000,
     tags: ["gta5", "utility", "community"],
@@ -766,7 +766,7 @@ export const CATALOG = [
     requirements: ["Windows", "Grand Theft Auto V installed"]
   },
   {
-    name: "Stand", category: "gamecheats", sub: "Premium",
+    name: "Stand", category: "gamecheats", sub: "Cheats",
     price: "Paid", site: "stand.gg", version: "Latest",
     size: "80 MB", rating: 4.7, downloads: 175000,
     tags: ["gta5", "premium", "customization"],
@@ -776,17 +776,7 @@ export const CATALOG = [
     requirements: ["Windows", "Grand Theft Auto V installed"]
   },
   {
-    name: "Xeno Executor", category: "roblox", sub: "Executor",
-    price: "Free", site: "xenoexecutor.com", version: "Latest",
-    size: "15 MB", rating: 4.5, downloads: 210000,
-    tags: ["roblox", "executor", "scripts"],
-    short: "Roblox script execution tool entry.",
-    long: "Xeno Executor is a Roblox executor catalog entry with a lightweight interface.",
-    features: ["Script workspace", "Simple interface", "Configuration options"],
-    requirements: ["Windows", "Roblox installed"]
-  },
-  {
-    name: "Wave Executor", category: "roblox", sub: "Executor",
+    name: "Wave Executor", category: "roblox", sub: "Executors",
     price: "Freemium", site: "waveexecutor.com", version: "Latest",
     size: "25 MB", rating: 4.6, downloads: 190000,
     tags: ["roblox", "executor", "scripts"],
@@ -796,20 +786,9 @@ export const CATALOG = [
     requirements: ["Windows", "Roblox installed"]
   },
   {
-    name: "Solara Executor", category: "roblox", sub: "Executor",
-    price: "Free", site: "solaraexecutor.com", version: "Latest",
-    size: "18 MB", rating: 4.4, downloads: 160000,
-    tags: ["roblox", "executor", "community"],
-    short: "Lightweight Roblox executor entry.",
-    long: "Solara Executor is a Roblox category product entry.",
-    features: ["Lightweight design", "Script support", "Simple setup"],
-    requirements: ["Windows", "Roblox installed"]
-  },
-
-  {
     name: "R5Reloaded",
     category: "gamecheats",
-    sub: "Development",
+    sub: "Cheats",
     price: "Free",
     site: "r5reloaded.com",
     version: "Latest",
@@ -823,25 +802,9 @@ export const CATALOG = [
     requirements: ["Windows", "Apex Legends files"]
   },
   {
-    name: "Stand",
-    category: "gamecheats",
-    sub: "Utility",
-    price: "Paid",
-    site: "stand.gg",
-    version: "Latest",
-    size: "100 MB",
-    rating: 4.8,
-    downloads: 85000,
-    tags: ["gta5", "modding", "utility"],
-    short: "GTA V modification platform with extensive customization options.",
-    long: "Stand is a GTA V modification framework known for customization and user tools.",
-    features: ["Customization", "Profiles", "User interface"],
-    requirements: ["Windows", "GTA V"]
-  },
-  {
     name: "Valorant External Tools",
     category: "gamecheats",
-    sub: "Utilities",
+    sub: "Cheats",
     price: "Free",
     site: "github.com",
     version: "Latest",
@@ -857,7 +820,7 @@ export const CATALOG = [
   {
     name: "Fortnite Community Tools",
     category: "gamecheats",
-    sub: "Utilities",
+    sub: "Cheats",
     price: "Free",
     site: "github.com",
     version: "Latest",
