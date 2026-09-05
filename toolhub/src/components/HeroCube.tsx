@@ -19,7 +19,7 @@ const SIZE = 210;
 const ORIGIN: Point = [108, 96];
 const RIGHT: Point = [SIZE, 0];    // along the front face, left to right
 const DOWN: Point = [0, SIZE];     // along the front face, top to bottom
-const DEPTH: Point = [76, -58];    // front face to back face, up and to the right
+const DEPTH: Point = [50, -40];    // front face to back face, up and to the right
 
 const at = (u: number, v: number, w = 0): Point => [
   ORIGIN[0] + u * RIGHT[0] + v * DOWN[0] + w * DEPTH[0],
