@@ -733,6 +733,143 @@ export const CATALOG = [
   features: ["Aim assistance", "Visual overlays", "Season tracking", "Configurable settings", "Release information"],
   requirements: ["Windows 10 or 11", "Apex Legends installed", "Current game build"]
 }
+
+  // ---------------------------------------------------------------- Games / Executors additions
+  {
+    name: "Midnight Rage Legit", category: "cs2", sub: "Legit",
+    price: "Paid", site: "midnight.im", version: "Latest",
+    size: "120 MB", rating: 4.8, downloads: 95000,
+    tags: ["cs2", "legit", "counter-strike"],
+    short: "Competitive CS2 utility with configurable gameplay features.",
+    long: "Midnight Rage Legit is a Counter-Strike 2 utility product entry with configurable features and profiles.",
+    features: ["Config system", "Profile management", "Visual options", "Regular updates"],
+    requirements: ["Windows 10 or 11", "Counter-Strike 2 installed"]
+  },
+  {
+    name: "Neverlose", category: "cs2", sub: "Premium",
+    price: "Paid", site: "neverlose.cc", version: "Latest",
+    size: "150 MB", rating: 4.7, downloads: 140000,
+    tags: ["cs2", "premium", "configs"],
+    short: "Popular CS2 customization platform.",
+    long: "Neverlose is a CS2 product entry focused on configurable profiles and customization options.",
+    features: ["Custom profiles", "Visual settings", "Community configs", "Updates"],
+    requirements: ["Windows 10 or 11", "Counter-Strike 2 installed"]
+  },
+  {
+    name: "Kiddion's Modest Menu", category: "gta5", sub: "Utilities",
+    price: "Free", site: "github.com", version: "Latest",
+    size: "20 MB", rating: 4.8, downloads: 220000,
+    tags: ["gta5", "utility", "community"],
+    short: "Community GTA V utility project.",
+    long: "A GTA V utility catalog entry for players who want additional single-player and online customization tools.",
+    features: ["Menu interface", "Custom settings", "Community maintained", "Lightweight"],
+    requirements: ["Windows", "Grand Theft Auto V installed"]
+  },
+  {
+    name: "Stand", category: "gta5", sub: "Premium",
+    price: "Paid", site: "stand.gg", version: "Latest",
+    size: "80 MB", rating: 4.7, downloads: 175000,
+    tags: ["gta5", "premium", "customization"],
+    short: "Feature-rich GTA V customization product.",
+    long: "Stand is a GTA V product entry with a configurable interface and extensive settings.",
+    features: ["Custom interface", "Profiles", "Settings manager", "Updates"],
+    requirements: ["Windows", "Grand Theft Auto V installed"]
+  },
+  {
+    name: "Xeno Executor", category: "roblox", sub: "Executor",
+    price: "Free", site: "xenoexecutor.com", version: "Latest",
+    size: "15 MB", rating: 4.5, downloads: 210000,
+    tags: ["roblox", "executor", "scripts"],
+    short: "Roblox script execution tool entry.",
+    long: "Xeno Executor is a Roblox executor catalog entry with a lightweight interface.",
+    features: ["Script workspace", "Simple interface", "Configuration options"],
+    requirements: ["Windows", "Roblox installed"]
+  },
+  {
+    name: "Wave Executor", category: "roblox", sub: "Executor",
+    price: "Freemium", site: "waveexecutor.com", version: "Latest",
+    size: "25 MB", rating: 4.6, downloads: 190000,
+    tags: ["roblox", "executor", "scripts"],
+    short: "Roblox executor product entry.",
+    long: "Wave Executor is listed as a Roblox tooling product with a modern interface.",
+    features: ["Script management", "User interface", "Updates"],
+    requirements: ["Windows", "Roblox installed"]
+  },
+  {
+    name: "Solara Executor", category: "roblox", sub: "Executor",
+    price: "Free", site: "solaraexecutor.com", version: "Latest",
+    size: "18 MB", rating: 4.4, downloads: 160000,
+    tags: ["roblox", "executor", "community"],
+    short: "Lightweight Roblox executor entry.",
+    long: "Solara Executor is a Roblox category product entry.",
+    features: ["Lightweight design", "Script support", "Simple setup"],
+    requirements: ["Windows", "Roblox installed"]
+  },
+
+  {
+    name: "R5Reloaded",
+    category: "apex",
+    sub: "Development",
+    price: "Free",
+    site: "r5reloaded.com",
+    version: "Latest",
+    size: "40 MB",
+    rating: 4.5,
+    downloads: 32000,
+    tags: ["apex", "community", "tools"],
+    short: "Community project for Apex Legends experimentation and custom modes.",
+    long: "R5Reloaded is a community-driven Apex Legends environment used for testing, custom scenarios and development experiments.",
+    features: ["Custom environments", "Community tools", "Testing support"],
+    requirements: ["Windows", "Apex Legends files"]
+  },
+  {
+    name: "Stand",
+    category: "gta5",
+    sub: "Utility",
+    price: "Paid",
+    site: "stand.gg",
+    version: "Latest",
+    size: "100 MB",
+    rating: 4.8,
+    downloads: 85000,
+    tags: ["gta5", "modding", "utility"],
+    short: "GTA V modification platform with extensive customization options.",
+    long: "Stand is a GTA V modification framework known for customization and user tools.",
+    features: ["Customization", "Profiles", "User interface"],
+    requirements: ["Windows", "GTA V"]
+  },
+  {
+    name: "Valorant External Tools",
+    category: "valorant",
+    sub: "Utilities",
+    price: "Free",
+    site: "github.com",
+    version: "Latest",
+    size: "20 MB",
+    rating: 4.2,
+    downloads: 15000,
+    tags: ["valorant", "tools"],
+    short: "Community utilities and tools for Valorant players.",
+    long: "Collection of community-made utilities and training tools related to Valorant.",
+    features: ["Player utilities", "Configuration tools", "Community projects"],
+    requirements: ["Windows", "Valorant installed"]
+  },
+  {
+    name: "Fortnite Community Tools",
+    category: "fortnite",
+    sub: "Utilities",
+    price: "Free",
+    site: "github.com",
+    version: "Latest",
+    size: "25 MB",
+    rating: 4.3,
+    downloads: 21000,
+    tags: ["fortnite", "tools", "community"],
+    short: "Community utilities and tools for Fortnite workflows.",
+    long: "Collection of community utilities designed around Fortnite configuration and development workflows.",
+    features: ["Configuration helpers", "Community projects", "Workflow tools"],
+    requirements: ["Windows", "Fortnite installed"]
+  },
 ];
 
 export const attachLogos = (items) => items.map((item) => ({ ...item, logo: logo(item.site) }));
