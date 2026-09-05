@@ -698,41 +698,41 @@ export const CATALOG = [
     requirements: ["Windows 10 or 11", "GTA V for PC", "Use only where third-party modifications are permitted"]
   },
   {
-    name: "Fortnite Hack", category: "gamecheats", sub: "Cheats", price: "Paid",
-    site: "fortnitehack.org", version: "42.10", size: "—", rating: 3.8, downloads: 44700,
-    tags: ["fortnite", "cheat", "aimbot", "esp", "wallhack"],
-    short: "Third-party Fortnite cheat listing tracked against the current game build.",
-    long: "This entry represents a third-party Fortnite cheat listing, not an Epic Games product. The version field is used as a game-build compatibility marker and is not a claim that the software is safe or undetected.",
-    features: ["Build compatibility marker", "ESP-style overlays", "Aim-assist style features", "Release-status tracking", "Catalog metadata"],
-    requirements: ["Windows 10 or 11 (64-bit)", "Fortnite PC installation", "Compatibility changes with game and anti-cheat updates"]
-  },
-  {
-    name: "Valorant Hack", category: "gamecheats", sub: "Cheats", price: "Paid",
-    site: "project-infinity.cloud", version: "2026.08", size: "—", rating: 3.7, downloads: 39200,
-    tags: ["valorant", "cheat", "esp", "aimbot", "vanguard"],
-    short: "Third-party Valorant cheat directory entry with a date-based release marker.",
-    long: "This listing covers third-party Valorant cheat software. Riot's Vanguard anti-cheat is active on Valorant, so detection and compatibility can change quickly; no undetected guarantee is made here.",
-    features: ["Date-based release tracking", "ESP-style overlays", "Aim-assist style options", "Status notes", "Compatibility metadata"],
-    requirements: ["Windows 10 or 11 (64-bit)", "Valorant installed", "Compatibility changes with Vanguard and game updates"]
-  },
-  {
-    name: "CS2 Hack", category: "gamecheats", sub: "Cheats", price: "Freemium",
-    site: "aimstar.online", version: "2.4.1", size: "—", rating: 3.9, downloads: 48600,
-    tags: ["cs2", "counter-strike-2", "cheat", "aimbot", "esp"],
-    short: "Third-party Counter-Strike 2 cheat listing with release metadata.",
-    long: "CS2 Hack is cataloged as a third-party competitive-game cheat listing. The popularity figures are directory baselines rather than verified real-world usage, and VAC or game updates can change compatibility at any time.",
-    features: ["Aimbot-style targeting", "ESP-style overlays", "Radar-style information", "Release tracking", "Compatibility notes"],
-    requirements: ["Windows 10 or 11", "Counter-Strike 2 installed", "Current game and anti-cheat build"]
-  },
-  {
-    name: "Apex Legends Hack", category: "gamecheats", sub: "Cheats", price: "Paid",
-    site: "safecheats.io", version: "2026.05", size: "—", rating: 3.6, downloads: 31500,
-    tags: ["apex-legends", "cheat", "esp", "aimbot", "wallhack"],
-    short: "Third-party Apex Legends cheat listing with season and release tracking.",
-    long: "This directory entry tracks a third-party Apex Legends cheat listing by release period and supported game season. It is not affiliated with Electronic Arts or Respawn, and detection resistance is not guaranteed.",
-    features: ["Season compatibility marker", "ESP-style overlays", "Aim-assist style options", "Release tracking", "Catalog changelog metadata"],
-    requirements: ["Windows 10 or 11 (64-bit)", "Apex Legends PC installation", "Compatibility depends on anti-cheat and game updates"]
-  }
+  name: "CS2 Midnight Rage Legit", category: "gamecheats", sub: "Cheats", price: "Paid",
+  site: "midnight.rage", version: "2026.08", size: "—", rating: 4.2, downloads: 28400,
+  tags: ["cs2", "counter-strike-2", "legit", "cheat"],
+  short: "Third-party CS2 cheat product listed with release and compatibility metadata.",
+  long: "CS2 Midnight Rage Legit is a third-party Counter-Strike 2 cheat product. This catalog entry contains product metadata and compatibility information only.",
+  features: ["Legit-style configuration", "Aim assistance", "Visual information", "Configurable settings", "Release tracking"],
+  requirements: ["Windows 10 or 11", "Counter-Strike 2 installed", "Current game build"]
+},
+{
+  name: "Fortnite Project Nova", category: "gamecheats", sub: "Cheats", price: "Paid",
+  site: "project-nova.example", version: "2026.08", size: "—", rating: 3.9, downloads: 16300,
+  tags: ["fortnite", "cheat", "esp", "aim"],
+  short: "Third-party Fortnite cheat product with release and compatibility metadata.",
+  long: "Fortnite Project Nova is a third-party Fortnite cheat product. The catalog entry is informational and tracks the product name, release state and compatibility metadata.",
+  features: ["Aim assistance", "Visual overlays", "Configurable settings", "Build tracking", "Release information"],
+  requirements: ["Windows 10 or 11", "Fortnite installed", "Current game build"]
+},
+{
+  name: "Valorant Project Infinity", category: "gamecheats", sub: "Cheats", price: "Paid",
+  site: "project-infinity.example", version: "2026.08", size: "—", rating: 3.8, downloads: 14100,
+  tags: ["valorant", "cheat", "esp", "aim"],
+  short: "Third-party Valorant cheat product with release tracking.",
+  long: "Valorant Project Infinity is a third-party Valorant cheat product. Compatibility can change following game and anti-cheat updates, so the version shown is a catalog snapshot.",
+  features: ["Aim assistance", "Visual overlays", "Configurable settings", "Release tracking", "Compatibility metadata"],
+  requirements: ["Windows 10 or 11", "Valorant installed", "Current game build"]
+},
+{
+  name: "Apex Legends SafeCheats", category: "gamecheats", sub: "Cheats", price: "Paid",
+  site: "safecheats.example", version: "2026.08", size: "—", rating: 3.7, downloads: 11800,
+  tags: ["apex-legends", "cheat", "esp", "aim"],
+  short: "Third-party Apex Legends cheat product with season compatibility tracking.",
+  long: "Apex Legends SafeCheats is a third-party Apex Legends cheat product. This entry records catalog metadata and supported release information without making claims about detection resistance.",
+  features: ["Aim assistance", "Visual overlays", "Season tracking", "Configurable settings", "Release information"],
+  requirements: ["Windows 10 or 11", "Apex Legends installed", "Current game build"]
+}
 ];
 
 export const attachLogos = (items) => items.map((item) => ({ ...item, logo: logo(item.site) }));
