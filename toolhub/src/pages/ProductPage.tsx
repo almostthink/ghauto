@@ -268,7 +268,7 @@ export function ProductPage() {
 
             <div className="hero-actions">
               <a className="btn primary" href={`/api/products/${product.id}/download`} rel="nofollow noopener">
-                <Download size={17} /> {product.hasFile ? `Download${product.fileBytes ? ` (${formatBytes(product.fileBytes)})` : ""}` : "Download"}
+                <Download size={17} /> Download
               </a>
             </div>
 
