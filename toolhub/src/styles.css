@@ -915,9 +915,11 @@ body{background:radial-gradient(circle at 74% -12%,#43248a2e,transparent 38%),va
 @media(max-width:1040px){.nav-right .header-cta{display:none}}
 
 @media(max-width:700px){
-  /* Two buttons side by side only fit with tighter padding. */
+  /* Two buttons side by side, or one per line when the labels no longer fit.
+     min-width:max-content is what stops flex from squeezing a button narrower
+     than its own label, which used to leave the text spilling over its edges. */
   .app-shell .hero-actions{flex-wrap:wrap}
-  .app-shell .hero-actions .btn{padding:0 14px;font-size:13.5px;min-width:0}
+  .app-shell .hero-actions .btn{padding:0 14px;font-size:13.5px;flex:1 1 auto;min-width:max-content}
   /* The subscribe form stacks instead of squeezing the button off-screen. */
   .newsletter-panel form.wide-newsletter{flex-wrap:wrap;gap:8px;width:100%}
   .wide-newsletter input{border-radius:12px;width:100%;flex:1 0 100%}
@@ -1122,3 +1124,11 @@ td{font-size:13px;padding:15px 16px}
 .subcat-action:hover{background:#ffffff1f;color:#fff}
 .subcat-action.danger{color:#f2a0ab}
 .subcat-action.danger:hover{background:#ff5f7a2e;color:#ffd7dd}
+
+/* Narrow phones (320px and down): the hero headline and the two-column stats
+   were each a few pixels wider than the viewport. */
+@media(max-width:360px){
+  .app-shell .hero h1{font-size:31px;letter-spacing:-1px}
+  .app-shell .stats-grid{grid-template-columns:1fr;padding:16px}
+  .app-shell .stat-tile b{font-size:20px}
+}
