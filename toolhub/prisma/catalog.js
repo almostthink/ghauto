@@ -732,7 +732,7 @@ export const CATALOG = [
   long: "Apex Legends SafeCheats is a third-party Apex Legends cheat product. This entry records catalog metadata and supported release information without making claims about detection resistance.",
   features: ["Aim assistance", "Visual overlays", "Season tracking", "Configurable settings", "Release information"],
   requirements: ["Windows 10 or 11", "Apex Legends installed", "Current game build"]
-}
+},
 
   // ---------------------------------------------------------------- Games / Executors additions
   {
