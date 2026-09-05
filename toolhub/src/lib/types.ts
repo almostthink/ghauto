@@ -209,6 +209,7 @@ export interface Settings {
     searchPlaceholder: string;
     headerCtaLabel: string;
     headerCtaHref: string;
+    archivePassword: string;
   };
   seo: {
     titleTemplate: string;

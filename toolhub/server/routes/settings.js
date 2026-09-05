@@ -18,7 +18,11 @@ export const DEFAULT_SETTINGS = {
     searchPlaceholder: "Search tools...",
     // The purple call to action in the header. Clear the label to hide it.
     headerCtaLabel: "Browse Tools",
-    headerCtaHref: "/windows"
+    headerCtaHref: "/windows",
+    // Shown next to the download button for products served from this server,
+    // because those archives are packed with a password. Clear it to hide the
+    // hint everywhere.
+    archivePassword: "Cat"
   },
   seo: {
     titleTemplate: "%s — ToolHub",

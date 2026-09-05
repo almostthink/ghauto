@@ -66,6 +66,14 @@ export function SettingsAdmin() {
             />
           </label>
           <label>
+            Archive password
+            <input
+              value={draft.site.archivePassword ?? ""}
+              placeholder="Leave empty to hide the hint"
+              onChange={(event) => setDraft({ ...draft, site: { ...draft.site, archivePassword: event.target.value } })}
+            />
+          </label>
+          <label>
             Header button link
             <input
               value={draft.site.headerCtaHref}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { BadgeCheck, Check, Download, Flag, Globe, History, Monitor, Star } from "lucide-react";
+import { BadgeCheck, Check, Copy, Download, Flag, Globe, History, KeyRound, Monitor, Star } from "lucide-react";
 import { ProductCard } from "../components/ProductCard";
 import { Turnstile } from "../components/Turnstile";
 import { ErrorState, Skeleton, StarRating, useToast } from "../components/ui";
@@ -195,6 +195,7 @@ export function ProductPage() {
   const shots = product.screenshots.length ? product.screenshots : product.gallery;
   const cover = shots[activeImage]?.url || product.thumbnail;
   const showDownloads = settings?.features.showDownloadCounts !== false;
+  const archivePassword = settings?.site.archivePassword ?? "";
 
   return (
     <section className="section product-page">
@@ -271,6 +272,7 @@ export function ProductPage() {
                 <Download size={17} /> Download
               </a>
             </div>
+            <ArchivePasswordHint show={product.hasFile} password={archivePassword} />
 
             <div className="detail-stats">
               <div><b>{showDownloads ? formatCompact(product.downloads) : "—"}</b><span>Downloads</span></div>
@@ -365,6 +367,7 @@ export function ProductPage() {
             <a className="btn primary full" href={`/api/products/${product.id}/download`} rel="nofollow noopener">
               <Download size={16} /> Download now
             </a>
+            <ArchivePasswordHint show={product.hasFile} password={archivePassword} />
             <button
               type="button"
               className="report-btn"
@@ -389,5 +392,40 @@ export function ProductPage() {
         ) : null}
       </div>
     </section>
+  );
+}
+
+// The archives served from this server are packed with a password, so it sits
+// beside the button rather than on it: the label stays a plain "Download", and
+// the password can be copied without selecting it by hand.
+function ArchivePasswordHint({ show, password }: { show: boolean; password: string }) {
+  const toast = useToast();
+  const [copied, setCopied] = useState(false);
+
+  if (!show || !password) return null;
+
+  return (
+    <p className="archive-password">
+      <KeyRound size={13} />
+      <span>Archive password</span>
+      <button
+        type="button"
+        className="archive-password-value"
+        title="Copy the password"
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(password);
+            setCopied(true);
+            window.setTimeout(() => setCopied(false), 1600);
+          } catch {
+            // Clipboard access can be refused; the password is on screen anyway.
+            toast("Copy it by hand: " + password, "info");
+          }
+        }}
+      >
+        <b>{password}</b>
+        {copied ? <Check size={12} /> : <Copy size={12} />}
+      </button>
+    </p>
   );
 }
