@@ -11,7 +11,7 @@ const logo = (domain) => `https://www.google.com/s2/favicons?domain=${domain}&sz
 export const CATALOG = [
   // ---------------------------------------------------------------- Windows
   {
-    name: "CCleaner", category: "windows", sub: "Optimization", price: "Freemium",
+    name: "CCleaner", category: "windows", sub: "Optimization", price: "Free",
     site: "ccleaner.com", version: "6.30", size: "52 MB", rating: 4.3, downloads: 128540,
     tags: ["cleanup", "registry", "privacy"],
     short: "Clears temporary files, browser data and unused registry entries.",
@@ -29,7 +29,7 @@ export const CATALOG = [
     requirements: ["Windows 10 or 11", "512 MB RAM"]
   },
   {
-    name: "Glary Utilities", category: "windows", sub: "Optimization", price: "Freemium",
+    name: "Glary Utilities", category: "windows", sub: "Optimization", price: "Free",
     site: "glarysoft.com", version: "6.14", size: "38 MB", rating: 4.2, downloads: 33800,
     tags: ["cleanup", "maintenance"],
     short: "Maintenance suite bundling cleanup, repair and optimisation tools.",
@@ -47,7 +47,7 @@ export const CATALOG = [
     requirements: ["Windows 10 (1809) or Windows 11", "1 GB RAM"]
   },
   {
-    name: "Process Lasso", category: "windows", sub: "Optimization", price: "Freemium",
+    name: "Process Lasso", category: "windows", sub: "Optimization", price: "Free",
     site: "bitsum.com", version: "14.2", size: "12 MB", rating: 4.6, downloads: 27400,
     tags: ["cpu", "performance"],
     short: "Keeps a busy machine responsive by shaping process priorities.",
@@ -56,7 +56,7 @@ export const CATALOG = [
     requirements: ["Windows 10 or 11 (64-bit)", "2 GB RAM"]
   },
   {
-    name: "Revo Uninstaller", category: "windows", sub: "Optimization", price: "Freemium",
+    name: "Revo Uninstaller", category: "windows", sub: "Optimization", price: "Free",
     site: "revouninstaller.com", version: "2.5.9", size: "22 MB", rating: 4.7, downloads: 46300,
     tags: ["uninstall", "cleanup"],
     short: "Removes programs together with the files and registry keys they leave.",
@@ -74,7 +74,7 @@ export const CATALOG = [
     requirements: ["Windows 10 or 11", "No installation required"]
   },
   {
-    name: "WizTree", category: "windows", sub: "Optimization", price: "Freemium",
+    name: "WizTree", category: "windows", sub: "Optimization", price: "Free",
     site: "diskanalyzer.com", version: "4.24", size: "8 MB", rating: 4.8, downloads: 38100,
     tags: ["disk", "analyzer"],
     short: "Finds what is filling a drive, in seconds.",
@@ -83,7 +83,7 @@ export const CATALOG = [
     requirements: ["Windows 10 or 11", "NTFS drive for fast scans"]
   },
   {
-    name: "Malwarebytes", category: "windows", sub: "Security", price: "Freemium",
+    name: "Malwarebytes", category: "windows", sub: "Security", price: "Free",
     site: "malwarebytes.com", version: "5.3", size: "270 MB", rating: 4.6, downloads: 96200,
     tags: ["antimalware", "security"],
     short: "Second-opinion scanner for malware, adware and unwanted software.",
@@ -92,7 +92,7 @@ export const CATALOG = [
     requirements: ["Windows 10 or 11", "4 GB RAM", "250 MB free disk space"]
   },
   {
-    name: "Bitwarden", category: "windows", sub: "Security", price: "Freemium",
+    name: "Bitwarden", category: "windows", sub: "Security", price: "Free",
     site: "bitwarden.com", version: "2026.8", size: "88 MB", rating: 4.8, downloads: 74600,
     tags: ["passwords", "open source"],
     short: "Open-source password manager that syncs across every device.",
@@ -238,7 +238,7 @@ export const CATALOG = [
     requirements: ["Windows 10 or 11 (64-bit)", ".NET runtime included in the installer"]
   },
   {
-    name: "FPS Monitor", category: "game", sub: "Overlays", price: "Paid",
+    name: "FPS Monitor", category: "game", sub: "Overlays", price: "Premium",
     site: "fpsmon.com", version: "6.2", size: "26 MB", rating: 4.4, downloads: 18900,
     tags: ["overlay", "monitoring"],
     short: "Configurable hardware overlay designed for gameplay.",
@@ -265,7 +265,7 @@ export const CATALOG = [
     requirements: ["Windows 10 or 11", ".NET runtime"]
   },
   {
-    name: "Bandicam", category: "game", sub: "Recording", price: "Freemium",
+    name: "Bandicam", category: "game", sub: "Recording", price: "Premium",
     site: "bandicam.com", version: "8.2", size: "96 MB", rating: 4.3, downloads: 44100,
     tags: ["recording", "capture"],
     short: "Lightweight recorder for games, screen regions and devices.",
@@ -283,7 +283,7 @@ export const CATALOG = [
     requirements: ["Windows 10 or 11", "Single-player titles only"]
   },
   {
-    name: "WeMod", category: "game", sub: "Trainers", price: "Freemium",
+    name: "WeMod", category: "game", sub: "Trainers", price: "Free",
     site: "wemod.com", version: "9.4", size: "120 MB", rating: 4.2, downloads: 63500,
     tags: ["trainers", "single player"],
     short: "Ready-made trainers for thousands of single-player games.",
@@ -485,7 +485,7 @@ export const CATALOG = [
     requirements: ["Chrome, Edge or Brave", "Desktop application available"]
   },
   {
-    name: "Rotki", category: "crypto", sub: "Analytics", price: "Freemium",
+    name: "Rotki", category: "crypto", sub: "Analytics", price: "Free",
     site: "rotki.com", version: "1.36", size: "180 MB", rating: 4.5, downloads: 16800,
     tags: ["portfolio", "privacy", "open source"],
     short: "Portfolio tracker and accounting tool that runs locally.",
@@ -494,7 +494,7 @@ export const CATALOG = [
     requirements: ["Windows 10+, macOS or Linux", "4 GB RAM"]
   },
   {
-    name: "CoinStats", category: "crypto", sub: "Analytics", price: "Freemium",
+    name: "CoinStats", category: "crypto", sub: "Analytics", price: "Free",
     site: "coinstats.app", version: "5.12", size: "112 MB", rating: 4.3, downloads: 67400,
     tags: ["portfolio", "tracker"],
     short: "Portfolio tracker that connects exchanges and wallets in one view.",
@@ -595,7 +595,7 @@ export const CATALOG = [
     requirements: ["Windows 10 or 11", "Counter-Strike 2 or a Source game"]
   },
   {
-    name: "Blitz", category: "game", sub: "Utilities", price: "Premium",
+    name: "Blitz", category: "game", sub: "Utilities", price: "Free",
     site: "blitz.gg", version: "3.24", size: "160 MB", rating: 4.2, downloads: 84300,
     tags: ["valorant", "stats", "overlay"],
     short: "Companion app with stats, lineups and post-match review.",
@@ -604,7 +604,7 @@ export const CATALOG = [
     requirements: ["Windows 10 or 11", "Publisher account for match history"]
   },
   {
-    name: "Tracker Network", category: "game", sub: "Utilities", price: "Premium",
+    name: "Tracker Network", category: "game", sub: "Utilities", price: "Free",
     site: "tracker.gg", version: "4.2", size: "120 MB", rating: 4.3, downloads: 71500,
     tags: ["fortnite", "stats", "overlay"],
     short: "Match statistics and overlay for Fortnite, Apex and more.",
@@ -631,7 +631,7 @@ export const CATALOG = [
     requirements: ["Windows 10 or 11", ".NET runtime included in the installer"]
   },
   {
-    name: "Borderless Gaming", category: "game", sub: "Utilities", price: "Freemium",
+    name: "Borderless Gaming", category: "game", sub: "Utilities", price: "Free",
     site: "github.com", version: "10.5", size: "3 MB", rating: 4.5, downloads: 39200,
     tags: ["window", "fullscreen", "open source"],
     short: "Turns a windowed game into borderless fullscreen.",
