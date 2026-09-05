@@ -736,7 +736,7 @@ export const CATALOG = [
 
   // ---------------------------------------------------------------- Games / Executors additions
   {
-    name: "Midnight Rage Legit", category: "cs2", sub: "Legit",
+    name: "Midnight Rage Legit", category: "gamecheats", sub: "Legit",
     price: "Paid", site: "midnight.im", version: "Latest",
     size: "120 MB", rating: 4.8, downloads: 95000,
     tags: ["cs2", "legit", "counter-strike"],
@@ -746,7 +746,7 @@ export const CATALOG = [
     requirements: ["Windows 10 or 11", "Counter-Strike 2 installed"]
   },
   {
-    name: "Neverlose", category: "cs2", sub: "Premium",
+    name: "Neverlose", category: "gamecheats", sub: "Premium",
     price: "Paid", site: "neverlose.cc", version: "Latest",
     size: "150 MB", rating: 4.7, downloads: 140000,
     tags: ["cs2", "premium", "configs"],
@@ -756,7 +756,7 @@ export const CATALOG = [
     requirements: ["Windows 10 or 11", "Counter-Strike 2 installed"]
   },
   {
-    name: "Kiddion's Modest Menu", category: "gta5", sub: "Utilities",
+    name: "Kiddion's Modest Menu", category: "gamecheats", sub: "Utilities",
     price: "Free", site: "github.com", version: "Latest",
     size: "20 MB", rating: 4.8, downloads: 220000,
     tags: ["gta5", "utility", "community"],
@@ -766,7 +766,7 @@ export const CATALOG = [
     requirements: ["Windows", "Grand Theft Auto V installed"]
   },
   {
-    name: "Stand", category: "gta5", sub: "Premium",
+    name: "Stand", category: "gamecheats", sub: "Premium",
     price: "Paid", site: "stand.gg", version: "Latest",
     size: "80 MB", rating: 4.7, downloads: 175000,
     tags: ["gta5", "premium", "customization"],
@@ -808,7 +808,7 @@ export const CATALOG = [
 
   {
     name: "R5Reloaded",
-    category: "apex",
+    category: "gamecheats",
     sub: "Development",
     price: "Free",
     site: "r5reloaded.com",
@@ -824,7 +824,7 @@ export const CATALOG = [
   },
   {
     name: "Stand",
-    category: "gta5",
+    category: "gamecheats",
     sub: "Utility",
     price: "Paid",
     site: "stand.gg",
@@ -840,7 +840,7 @@ export const CATALOG = [
   },
   {
     name: "Valorant External Tools",
-    category: "valorant",
+    category: "gamecheats",
     sub: "Utilities",
     price: "Free",
     site: "github.com",
@@ -856,7 +856,7 @@ export const CATALOG = [
   },
   {
     name: "Fortnite Community Tools",
-    category: "fortnite",
+    category: "gamecheats",
     sub: "Utilities",
     price: "Free",
     site: "github.com",
