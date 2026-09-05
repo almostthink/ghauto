@@ -21,10 +21,20 @@ const serialize = (category) => ({
   seoTitle: category.seoTitle,
   seoDescription: category.seoDescription,
   productCount: category._count?.products ?? 0,
+  // Children carry the same fields as their parent so the panel can edit and
+  // delete them in place, without a second request per subcategory.
   children: (category.children ?? []).map((child) => ({
     id: child.id,
     slug: child.slug,
     name: child.name,
+    description: child.description,
+    icon: child.icon,
+    accent: child.accent,
+    position: child.position,
+    visible: child.visible,
+    parentId: child.parentId,
+    seoTitle: child.seoTitle,
+    seoDescription: child.seoDescription,
     // A product names a parent category and, optionally, a subcategory. For a
     // child the products are the ones pointing at it as their subcategory,
     // which is the subProducts relation, not products.
@@ -91,11 +101,15 @@ categoriesRouter.put("/:id", requireAuth, route(async (req, res) => {
 categoriesRouter.delete("/:id", requireAuth, route(async (req, res) => {
   const category = await prisma.category.findUnique({
     where: { id: req.params.id },
-    include: { _count: { select: { products: true, children: true } } }
+    include: { _count: { select: { products: true, subProducts: true, children: true } } }
   });
   if (!category) throw notFound("Category not found");
-  if (category._count.products > 0) {
-    throw new HttpError(409, "Move or delete the products in this category first");
+  // Products reach a top-level category through `products` and a subcategory
+  // through `subProducts`; both must be empty, or deleting one would quietly
+  // strip the subcategory from every product that used it.
+  const attached = category._count.products + category._count.subProducts;
+  if (attached > 0) {
+    throw new HttpError(409, `Move or delete the ${attached} products in this category first`);
   }
   await prisma.category.delete({ where: { id: category.id } });
   await audit(req, "category.delete", "category", category.id, { name: category.name });

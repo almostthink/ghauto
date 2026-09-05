@@ -4,7 +4,7 @@ import { ConfirmDialog, ErrorState, Skeleton, useToast } from "../components/ui"
 import { CategoryIcon, ICON_NAMES } from "../components/icons";
 import { api } from "../lib/api";
 import { useCategories, useDeleteCategory, useInvalidate, useSaveCategory } from "../lib/queries";
-import type { Category } from "../lib/types";
+import type { Category, Subcategory } from "../lib/types";
 import { AdminPanel, PageHeading } from "./components";
 
 type Draft = Partial<Category> & { name: string };
@@ -18,7 +18,7 @@ export function CategoriesAdmin() {
   const remove = useDeleteCategory();
 
   const [editing, setEditing] = useState<Draft | null>(null);
-  const [confirm, setConfirm] = useState<Category | null>(null);
+  const [confirm, setConfirm] = useState<Category | Subcategory | null>(null);
 
   const categories = data?.items ?? [];
 
@@ -77,7 +77,27 @@ export function CategoriesAdmin() {
             {category.children.length ? (
               <div className="subcat-row">
                 {category.children.map((child) => (
-                  <span className="tag" key={child.id}>{child.name} · {child.productCount}</span>
+                  <span className="tag subcat-tag" key={child.id}>
+                    {child.name} · {child.productCount}
+                    <button
+                      type="button"
+                      className="subcat-action"
+                      onClick={() => setEditing(child)}
+                      aria-label={`Edit ${child.name}`}
+                      title="Edit"
+                    >
+                      <Edit3 size={11} />
+                    </button>
+                    <button
+                      type="button"
+                      className="subcat-action danger"
+                      onClick={() => setConfirm(child)}
+                      aria-label={`Delete ${child.name}`}
+                      title="Delete"
+                    >
+                      <Trash2 size={11} />
+                    </button>
+                  </span>
                 ))}
               </div>
             ) : null}
@@ -122,7 +142,9 @@ export function CategoriesAdmin() {
           message={
             confirm.productCount > 0
               ? "This category still has products. Move them first, or the delete will be refused."
-              : "Subcategories are detached and products are untouched. This cannot be undone."
+              : confirm.parentId
+                ? "The subcategory disappears from the filters on its category page. This cannot be undone."
+                : "Subcategories are detached and products are untouched. This cannot be undone."
           }
           confirmLabel="Delete"
           tone="danger"

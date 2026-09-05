@@ -10,6 +10,20 @@ export interface CategoryRef {
   accent?: string;
 }
 
+// A subcategory is a category with a parent; it carries the same fields, minus
+// children of its own.
+export interface Subcategory extends CategoryRef {
+  description: string;
+  accent: string;
+  icon: string;
+  position: number;
+  visible: boolean;
+  parentId: string | null;
+  seoTitle: string;
+  seoDescription: string;
+  productCount: number;
+}
+
 export interface Category extends CategoryRef {
   description: string;
   accent: string;
@@ -20,7 +34,7 @@ export interface Category extends CategoryRef {
   seoTitle: string;
   seoDescription: string;
   productCount: number;
-  children: { id: string; slug: string; name: string; productCount: number }[];
+  children: Subcategory[];
 }
 
 export interface ProductImage {
