@@ -1132,3 +1132,14 @@ td{font-size:13px;padding:15px 16px}
   .app-shell .stats-grid{grid-template-columns:1fr;padding:16px}
   .app-shell .stat-tile b{font-size:20px}
 }
+
+/* Picking a file that already sits in the products folder on the server */
+.panel-actions{display:flex;gap:8px;flex-wrap:wrap}
+.stored-file-list{display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto;margin:12px 0 4px}
+.stored-file{display:flex;align-items:center;gap:12px;width:100%;text-align:left;cursor:pointer;
+  background:#0d1424;border:1px solid var(--line);border-radius:11px;padding:11px 13px;color:inherit;transition:.15s}
+.stored-file:hover:not(:disabled){border-color:#7e52db77;background:#111a2c}
+.stored-file:disabled{opacity:.55;cursor:default}
+.stored-file-main{display:flex;flex-direction:column;gap:3px;min-width:0}
+.stored-file-main b{font-size:13.5px;word-break:break-all}
+.stored-file-main small{color:#75839a;font-size:11.5px}

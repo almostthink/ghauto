@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Download, Edit3, FileDown, Link2, Plus, Search, Trash2, X } from "lucide-react";
+import { Download, Edit3, FileDown, FolderOpen, Link2, Plus, Search, Trash2, X } from "lucide-react";
 import { ConfirmDialog, EmptyState, ErrorState, Skeleton, useDebounced, useToast } from "../components/ui";
 import { adminUrl } from "../lib/config";
 import { formatCompact, formatDate } from "../lib/format";
 import { queryString } from "../lib/api";
-import { useBulkLinks, useBulkProducts, useCategories, useDeleteProduct, useProducts } from "../lib/queries";
+import {
+  useBulkAttachFile, useBulkLinks, useBulkProducts, useCategories, useDeleteProduct, useProducts
+} from "../lib/queries";
 import { AdminPanel, PageHeading } from "./components";
+import { StoredFileDialog } from "./ProductEditor";
 
 const STATUS_LABELS: Record<string, string> = {
   published: "Published",
@@ -25,6 +28,7 @@ export function ProductsList() {
   const [selected, setSelected] = useState<string[]>([]);
   const [confirm, setConfirm] = useState<{ ids: string[]; single?: string } | null>(null);
   const [linksOpen, setLinksOpen] = useState(false);
+  const [filesOpen, setFilesOpen] = useState(false);
   const debounced = useDebounced(term, 250);
 
   const filters = {
@@ -119,6 +123,9 @@ export function ProductsList() {
             <button type="button" className="btn ghost small" onClick={() => setLinksOpen(true)}>
               <Link2 size={13} /> Download links
             </button>
+            <button type="button" className="btn ghost small" onClick={() => setFilesOpen(true)}>
+              <FolderOpen size={13} /> Attach file
+            </button>
             <button type="button" className="btn danger small" onClick={() => setConfirm({ ids: selected })}>
               <Trash2 size={13} /> Delete
             </button>
@@ -211,6 +218,10 @@ export function ProductsList() {
         <BulkLinksDialog ids={selected} onClose={() => setLinksOpen(false)} />
       ) : null}
 
+      {filesOpen ? (
+        <BulkFileDialog ids={selected} onClose={() => setFilesOpen(false)} />
+      ) : null}
+
       {confirm ? (
         <ConfirmDialog
           title={confirm.single ? "Delete this product?" : `Delete ${confirm.ids.length} products?`}
@@ -223,6 +234,51 @@ export function ProductsList() {
         />
       ) : null}
     </div>
+  );
+}
+
+// Attaches a file from the products folder to the whole selection: the same
+// archive for everything, or one file per product matched on the name, which is
+// how a folder copied to the server by hand gets wired up in a single pass.
+function BulkFileDialog({ ids, onClose }: { ids: string[]; onClose: () => void }) {
+  const bulk = useBulkAttachFile();
+  const toast = useToast();
+
+  const run = async (body: { mode: "same" | "match"; key?: string }) => {
+    try {
+      const result = await bulk.mutateAsync({ ids, ...body });
+      if (!result.affected) {
+        toast(
+          result.missed.length
+            ? `Nothing attached. No file matched: ${result.missed.join(", ")}`
+            : "Nothing to change, those products already point at that file.",
+          "error"
+        );
+        return;
+      }
+      const missed = result.missed.length ? `, no match for ${result.missed.join(", ")}` : "";
+      toast(`Attached to ${result.affected} of ${result.examined} products${missed}`);
+      onClose();
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Could not attach the files", "error");
+    }
+  };
+
+  return (
+    <StoredFileDialog
+      busy={bulk.isPending}
+      title={`Attach a file to ${ids.length} products`}
+      onCancel={onClose}
+      onPick={(key) => run({ mode: "same", key })}
+      footer={
+        <div className="modal-actions">
+          <button type="button" className="btn ghost" onClick={onClose}>Cancel</button>
+          <button type="button" className="btn primary" disabled={bulk.isPending} onClick={() => run({ mode: "match" })}>
+            Match each product by name
+          </button>
+        </div>
+      }
+    />
   );
 }
 

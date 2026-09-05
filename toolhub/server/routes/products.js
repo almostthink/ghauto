@@ -5,14 +5,14 @@ import { audit } from "../lib/audit.js";
 import { requestContext } from "../lib/analytics.js";
 import { HttpError, notFound, parseBody, parseQuery, route } from "../lib/http.js";
 import {
-  deleteStoredFile, downloadNameFor, humanSize, resolveStoredPath, safeDownloadName, saveUploadStream,
-  statStoredFile
+  assertAllowed, deleteStoredFile, downloadNameFor, humanSize, listStoredFiles, resolveStoredPath,
+  safeDownloadName, saveUploadStream, statStoredFile
 } from "../lib/productFiles.js";
 import { slugify, uniqueSlug } from "../lib/text.js";
 import { requireAuth } from "../middleware/auth.js";
 import { downloadLimiter } from "../middleware/limits.js";
 import {
-  bulkLinksSchema, bulkProductSchema, productPatchSchema, productQuerySchema, productSchema
+  bulkFileSchema, bulkLinksSchema, bulkProductSchema, productPatchSchema, productQuerySchema, productSchema
 } from "../schemas/index.js";
 
 export const productsRouter = express.Router();
@@ -277,12 +277,66 @@ productsRouter.put("/:id/file", requireAuth, route(async (req, res) => {
   res.status(201).json(serializeProduct(updated));
 }));
 
+// --- Files already sitting in PRODUCTS_DIR --------------------------------
+// An archive copied to the server by hand is invisible to the panel until it
+// is attached to a product: the download endpoint serves what a product points
+// at, never whatever happens to be in the folder. This lists the folder so a
+// file can be picked instead of uploaded a second time.
+productsRouter.get("/file/library", requireAuth, route(async (_req, res) => {
+  const files = await listStoredFiles();
+  const owners = await prisma.product.findMany({
+    where: { fileKey: { in: files.map((file) => file.key) } },
+    select: { id: true, name: true, slug: true, fileKey: true }
+  });
+  res.json({
+    dir: env.products.dir,
+    items: files.map((file) => ({
+      ...file,
+      usedBy: owners.filter((owner) => owner.fileKey === file.key).map(({ id, name, slug }) => ({ id, name, slug }))
+    }))
+  });
+}));
+
+// Points a product at a file that is already in the folder. The bytes stay
+// where they are: several products may share one archive, and each visitor
+// still gets it named after the product they clicked.
+async function attachStoredFile(productId, key) {
+  assertAllowed(key);
+  const stat = await statStoredFile(key);
+  if (!stat) throw notFound(`No file named ${key} in the products folder`);
+  return prisma.product.update({
+    where: { id: productId },
+    data: { fileKey: key, fileName: safeDownloadName(key), fileBytes: stat.size, fileSize: humanSize(stat.size) },
+    include: productInclude
+  });
+}
+
+productsRouter.post("/:id/file/attach", requireAuth, route(async (req, res) => {
+  const product = await prisma.product.findUnique({ where: { id: req.params.id } });
+  if (!product) throw notFound("Product not found");
+  const key = String(req.body?.key || "");
+  if (!key) throw new HttpError(400, "`key` is required");
+
+  const updated = await attachStoredFile(product.id, key);
+  // The file it used to point at is only deleted when nothing else uses it.
+  if (product.fileKey && product.fileKey !== key) await dropFileIfUnused(product.fileKey, product.id);
+  await audit(req, "product.file_attach", "product", product.id, { key });
+  res.json(serializeProduct(updated));
+}));
+
+// Deletes the bytes only when no other product still points at them.
+async function dropFileIfUnused(key, exceptProductId) {
+  if (!key) return;
+  const others = await prisma.product.count({ where: { fileKey: key, NOT: { id: exceptProductId } } });
+  if (others === 0) await deleteStoredFile(key).catch(() => undefined);
+}
+
 productsRouter.delete("/:id/file", requireAuth, route(async (req, res) => {
   const product = await prisma.product.findUnique({ where: { id: req.params.id } });
   if (!product) throw notFound("Product not found");
   if (!product.fileKey) throw notFound("This product has no stored file");
 
-  await deleteStoredFile(product.fileKey);
+  await dropFileIfUnused(product.fileKey, product.id);
   const updated = await prisma.product.update({
     where: { id: product.id },
     // fileSize was filled in from the upload, so it goes with the file rather
@@ -400,7 +454,7 @@ productsRouter.delete("/:id", requireAuth, route(async (req, res) => {
   const existing = await prisma.product.findUnique({ where: { id: req.params.id } });
   if (!existing) throw notFound("Product not found");
   await prisma.product.delete({ where: { id: existing.id } });
-  if (existing.fileKey) await deleteStoredFile(existing.fileKey).catch(() => undefined);
+  if (existing.fileKey) await dropFileIfUnused(existing.fileKey, existing.id);
   await audit(req, "product.delete", "product", existing.id, { name: existing.name });
   res.status(204).end();
 }));
@@ -421,7 +475,11 @@ productsRouter.post("/bulk", requireAuth, route(async (req, res) => {
       select: { fileKey: true }
     });
     const result = await prisma.product.deleteMany({ where: { id: { in: ids } } });
-    for (const row of doomed) await deleteStoredFile(row.fileKey).catch(() => undefined);
+    // A shared archive stays on disk while any surviving product points at it.
+    for (const key of new Set(doomed.map((row) => row.fileKey))) {
+      const survivors = await prisma.product.count({ where: { fileKey: key } });
+      if (survivors === 0) await deleteStoredFile(key).catch(() => undefined);
+    }
     await audit(req, "product.bulk_delete", "product", "", { count: result.count });
     return res.json({ affected: result.count });
   }
@@ -429,6 +487,68 @@ productsRouter.post("/bulk", requireAuth, route(async (req, res) => {
   const result = await prisma.product.updateMany({ where: { id: { in: ids } }, data: updates[action] });
   await audit(req, `product.bulk_${action}`, "product", "", { count: result.count });
   res.json({ affected: result.count });
+}));
+
+// Attaches files from the products folder to many products at once: either the
+// same archive for all of them, or one file per product matched by name, which
+// is how a folder dropped on the server by hand gets wired up in one pass.
+productsRouter.post("/bulk/file", requireAuth, route(async (req, res) => {
+  const { ids, mode, key } = parseBody(bulkFileSchema, req.body);
+  const products = await prisma.product.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, name: true, slug: true, fileKey: true }
+  });
+
+  const library = await listStoredFiles();
+  const normalise = (value) => String(value).toLowerCase().replace(/\.[a-z0-9]{1,10}$/, "").replace(/[^a-z0-9]+/g, "");
+  const byName = new Map();
+  for (const file of library) {
+    const name = normalise(file.key);
+    if (!byName.has(name)) byName.set(name, file);
+  }
+
+  const plan = [];
+  const missed = [];
+  for (const product of products) {
+    const file = mode === "same"
+      ? library.find((candidate) => candidate.key === key)
+      : byName.get(normalise(product.name)) ?? byName.get(normalise(product.slug));
+    if (!file) {
+      missed.push(product.name);
+      continue;
+    }
+    if (product.fileKey !== file.key) plan.push({ product, file });
+  }
+  if (mode === "same" && !plan.length && missed.length) {
+    throw notFound(`No file named ${key} in the products folder`);
+  }
+
+  const previousKeys = new Set(plan.map(({ product }) => product.fileKey).filter(Boolean));
+  await prisma.$transaction(
+    plan.map(({ product, file }) =>
+      prisma.product.update({
+        where: { id: product.id },
+        data: {
+          fileKey: file.key,
+          fileName: safeDownloadName(file.key),
+          fileBytes: file.bytes,
+          fileSize: humanSize(file.bytes)
+        }
+      })
+    )
+  );
+  for (const previous of previousKeys) {
+    const stillUsed = await prisma.product.count({ where: { fileKey: previous } });
+    if (stillUsed === 0) await deleteStoredFile(previous).catch(() => undefined);
+  }
+
+  await audit(req, "product.bulk_file", "product", "", { mode, key: key ?? "", affected: plan.length });
+  res.json({
+    affected: plan.length,
+    examined: products.length,
+    missed: missed.slice(0, 8),
+    samples: plan.slice(0, 3).map(({ product, file }) => ({ name: product.name, key: file.key }))
+  });
 }));
 
 // Rewrites the download link on many products at once: either a find and

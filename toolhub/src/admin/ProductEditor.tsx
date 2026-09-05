@@ -1,15 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import {
-  ArrowLeft, Check, Eye, FileUp, HardDrive, Loader2, Plus, Save, Trash2
+  ArrowLeft, Check, Eye, FileUp, FolderOpen, HardDrive, Loader2, Plus, Save, Trash2, X
 } from "lucide-react";
 import { ErrorState, Skeleton, useToast } from "../components/ui";
 import { adminUrl } from "../lib/config";
 import { formatBytes, formatNumber, formatRelative } from "../lib/format";
 import {
-  useCategories, useDeleteProductFile, useFileLimits, useMeasured, useProduct, useSaveProduct,
-  useUploadProductFile
+  useAttachProductFile, useCategories, useDeleteProductFile, useFileLibrary, useFileLimits, useMeasured,
+  useProduct, useSaveProduct, useUploadProductFile
 } from "../lib/queries";
 import type { ChangelogEntry, Product, ProductImage } from "../lib/types";
 import { AdminPanel, ImageField, PageHeading } from "./components";
@@ -501,10 +501,12 @@ function MeasuredPanel({ id }: { id: string | undefined }) {
 function ProductFilePanel({ product }: { product: Product | undefined }) {
   const upload = useUploadProductFile();
   const remove = useDeleteProductFile();
+  const attach = useAttachProductFile();
   const limits = useFileLimits();
   const toast = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
   const [percent, setPercent] = useState(0);
+  const [picking, setPicking] = useState(false);
 
   if (!product) return null;
 
@@ -531,10 +533,15 @@ function ProductFilePanel({ product }: { product: Product | undefined }) {
       title="Installer file"
       subtitle={`Stored on this server${limits.data ? ` · up to ${limits.data.maxMb} MB` : ""}`}
       action={
-        <button type="button" className="btn ghost small" onClick={() => inputRef.current?.click()} disabled={upload.isPending}>
-          {upload.isPending ? <Loader2 size={13} className="spin" /> : <FileUp size={13} />}
-          {product.hasFile ? " Replace file" : " Upload file"}
-        </button>
+        <div className="panel-actions">
+          <button type="button" className="btn ghost small" onClick={() => setPicking(true)}>
+            <FolderOpen size={13} /> From the server
+          </button>
+          <button type="button" className="btn ghost small" onClick={() => inputRef.current?.click()} disabled={upload.isPending}>
+            {upload.isPending ? <Loader2 size={13} className="spin" /> : <FileUp size={13} />}
+            {product.hasFile ? " Replace file" : " Upload file"}
+          </button>
+        </div>
       }
     >
       {product.hasFile ? (
@@ -586,9 +593,87 @@ function ProductFilePanel({ product }: { product: Product | undefined }) {
       />
       <p className="form-note">
         Files are never served from a public folder: every download goes through the counted endpoint, so it is rate limited,
-        recorded in analytics and refused in blocked regions.
+        recorded in analytics and refused in blocked regions. A file already copied to the server can be attached with
+        “From the server”, and one archive can back several products, each visitor still gets it named after the product
+        they clicked.
       </p>
+
+      {picking ? (
+        <StoredFileDialog
+          busy={attach.isPending}
+          onCancel={() => setPicking(false)}
+          onPick={async (key) => {
+            try {
+              await attach.mutateAsync({ id: product.id, key });
+              toast("File attached");
+              setPicking(false);
+            } catch (error) {
+              toast(error instanceof Error ? error.message : "Could not attach the file", "error");
+            }
+          }}
+        />
+      ) : null}
     </AdminPanel>
+  );
+}
+
+// The products folder on the server, listed so a file copied there by hand can
+// be picked without uploading it a second time.
+export function StoredFileDialog({ busy, onCancel, onPick, title = "Files on the server", footer }: {
+  busy: boolean;
+  onCancel: () => void;
+  onPick: (key: string) => void;
+  title?: string;
+  footer?: ReactNode;
+}) {
+  const library = useFileLibrary();
+  const items = library.data?.items ?? [];
+
+  return (
+    <div className="modal-backdrop" onClick={onCancel} role="presentation">
+      <div className="modal" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true">
+        <div className="modal-head">
+          <div>
+            <span className="eyebrow">PRODUCT FILES</span>
+            <h2>{title}</h2>
+          </div>
+          <button type="button" onClick={onCancel} aria-label="Close"><X /></button>
+        </div>
+
+        <p className="form-note">
+          Everything in <code>{library.data?.dir ?? "the products folder"}</code>. Copy an archive there with scp and it
+          shows up in this list.
+        </p>
+
+        {library.isLoading ? <Skeleton height={120} /> : null}
+        {!library.isLoading && !items.length ? (
+          <p className="chart-empty">The folder is empty. Copy a file there, or upload one from this computer.</p>
+        ) : null}
+
+        <div className="stored-file-list">
+          {items.map((file) => (
+            <button
+              type="button"
+              key={file.key}
+              className="stored-file"
+              disabled={busy}
+              onClick={() => onPick(file.key)}
+            >
+              <span className="file-icon"><HardDrive size={15} /></span>
+              <span className="stored-file-main">
+                <b>{file.key}</b>
+                <small>
+                  {formatBytes(file.bytes)} · {formatRelative(file.modifiedAt)}
+                  {file.usedBy.length ? ` · used by ${file.usedBy.map((owner) => owner.name).join(", ")}` : ""}
+                </small>
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {footer}
+      </div>
+    </div>
   );
 }
 

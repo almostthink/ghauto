@@ -98,6 +98,30 @@ export async function saveUploadStream(req, filename) {
   return { key, bytes };
 }
 
+// Everything sitting in PRODUCTS_DIR, so a file copied there by hand can be
+// picked in the panel instead of being uploaded a second time.
+export async function listStoredFiles() {
+  let names;
+  try {
+    names = await fsp.readdir(env.products.dir);
+  } catch {
+    return [];
+  }
+  const files = [];
+  for (const name of names) {
+    if (name.startsWith(".")) continue;
+    if (!ALLOWED_EXTENSIONS.has(extensionOf(name))) continue;
+    try {
+      const stat = await fsp.stat(path.join(env.products.dir, name));
+      if (!stat.isFile()) continue;
+      files.push({ key: name, bytes: stat.size, modifiedAt: stat.mtime.toISOString() });
+    } catch {
+      /* vanished between readdir and stat */
+    }
+  }
+  return files.sort((a, b) => b.modifiedAt.localeCompare(a.modifiedAt));
+}
+
 export async function deleteStoredFile(key) {
   if (!key) return;
   await fsp.rm(resolveStoredPath(key), { force: true });

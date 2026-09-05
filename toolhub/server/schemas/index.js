@@ -99,6 +99,18 @@ export const bulkLinksSchema = z
     message: "`find` is required to replace, `template` is required to rebuild"
   });
 
+// Bulk attach of files already sitting in PRODUCTS_DIR: one archive for the
+// whole selection, or one file per product matched on the name.
+export const bulkFileSchema = z
+  .object({
+    ids: z.array(z.string().uuid()).min(1).max(500),
+    mode: z.enum(["same", "match"]),
+    key: trimmed(200).optional()
+  })
+  .refine((value) => value.mode !== "same" || Boolean(value.key), {
+    message: "`key` is required when the same file is attached to everything"
+  });
+
 export const categorySchema = z.object({
   name: trimmed(80).min(2),
   slug: trimmed(80).optional(),

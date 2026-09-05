@@ -299,6 +299,44 @@ export function useDeleteProductFile() {
   });
 }
 
+export interface StoredFile {
+  key: string;
+  bytes: number;
+  modifiedAt: string;
+  usedBy: { id: string; name: string; slug: string }[];
+}
+
+// Files already sitting in the products folder on the server, so one copied
+// there by hand can be attached instead of uploaded again.
+export const useFileLibrary = (enabled = true) =>
+  useQuery({
+    queryKey: ["file-library"],
+    queryFn: () => api<{ dir: string; items: StoredFile[] }>("/products/file/library"),
+    enabled,
+    staleTime: 15 * 1000
+  });
+
+export function useAttachProductFile() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: ({ id, key }: { id: string; key: string }) =>
+      api<Product>(`/products/${id}/file/attach`, { method: "POST", body: { key } }),
+    onSuccess: () => invalidate(["products", "product", "file-library"])
+  });
+}
+
+export function useBulkAttachFile() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: (body: { ids: string[]; mode: "same" | "match"; key?: string }) =>
+      api<{ affected: number; examined: number; missed: string[]; samples: { name: string; key: string }[] }>(
+        "/products/bulk/file",
+        { method: "POST", body }
+      ),
+    onSuccess: () => invalidate(["products", "product", "file-library"])
+  });
+}
+
 export function useUploadImage() {
   return useMutation({
     mutationFn: async ({ file, prefix }: { file: File; prefix?: string }) => {

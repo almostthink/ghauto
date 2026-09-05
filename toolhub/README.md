@@ -462,11 +462,13 @@ GET    /api/products               GET  /api/products/suggest
 GET    /api/products/:idOrSlug     GET  /api/products/:id/related
 GET    /api/products/:id/download  (счётчик + событие + файл или redirect)
 PUT    /api/products/:id/file      (загрузка установщика)
+POST   /api/products/:id/file/attach (файл из папки на сервере)
 DELETE /api/products/:id/file
-GET    /api/products/file/limits
+GET    /api/products/file/limits   GET  /api/products/file/library
 GET    /api/products/export/csv
 POST   /api/products               PUT  /api/products/:id
 DELETE /api/products/:id           POST /api/products/bulk
+POST   /api/products/bulk/links    POST /api/products/bulk/file
 
 GET    /api/categories             GET  /api/categories/:idOrSlug
 POST   /api/categories             PUT  /api/categories/:id
@@ -521,7 +523,27 @@ GET    /robots.txt                 GET  /sitemap.xml
    повлиять на путь;
 4. если файл загружен, кнопка Download отдаёт его с сервера с поддержкой
    Range (докачка), если нет, посетителя редиректит на внешний `downloadUrl`;
-5. замена файла удаляет старый, удаление продукта удаляет его установщик.
+5. замена файла удаляет старый, удаление продукта удаляет его установщик, но
+   только если на этот файл не ссылается другой продукт.
+
+### Файл уже лежит на сервере
+
+Архив, скопированный в `PRODUCTS_DIR` через scp, сам по себе ни с чем не связан:
+сайт отдаёт то, на что ссылается продукт, а не всё подряд из папки. Привязать
+его можно, не загружая второй раз:
+
+- **один продукт**: редактор, вкладка **Links**, кнопка «From the server»,
+  выбрать файл из списка;
+- **пачкой**: в списке продуктов отметить нужные, кнопка **Attach file**. Дальше
+  либо кликнуть файл в списке, тогда он привяжется ко всем отмеченным, либо
+  «Match each product by name», тогда каждому продукту достанется файл с
+  подходящим именем (`7-Zip.zip` → 7-Zip, регистр, пробелы и дефисы не важны).
+  В ответе видно, скольким продуктам файл нашёлся, а кому нет.
+
+Имя при скачивании берётся от продукта, а не от файла: один `1.zip` может
+обслуживать несколько карточек, и каждый посетитель получит его как
+`7-Zip.zip`, `Blender.zip` и так далее. Счётчики и аналитика работают так же,
+как для загруженного через панель.
 
 Разрешённые расширения: `exe, msi, msix, appx, zip, rar, 7z, tar, gz, tgz,
 dmg, pkg, apk, deb, rpm, appimage, jar, iso, bin, run`. Лимит размера задаётся
