@@ -34,7 +34,9 @@ export function safeDownloadName(filename, fallback = "download") {
   // Separators are folded first: basename() would otherwise treat a product
   // named "Blender / LTS" as a path and keep only the last segment.
   const flattened = String(filename || "").replace(/[\\/]+/g, "-");
-  const base = path.basename(flattened).replace(/[^\w.+\- ]+/g, "_").trim();
+  // Unicode aware: \w alone turned a Cyrillic product name into underscores.
+  // Express encodes the header per RFC 5987, so non-ASCII names arrive intact.
+  const base = path.basename(flattened).replace(/[^\p{L}\p{N}._+\- ]+/gu, "_").trim();
   return base && base !== "." ? base.slice(0, 120) : fallback;
 }
 
