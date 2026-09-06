@@ -159,7 +159,7 @@ export const CATALOG = [
     site: "7-zip.org", version: "25.01", size: "1.6 MB", rating: 4.9, downloads: 152300,
     tags: ["archive", "open source"],
     short: "Archiver with strong compression and support for every common format.",
-    long: "7-Zip packs and unpacks 7z, ZIP, TAR, GZIP and RAR among others, with AES-256 encryption for 7z and ZIP archives. Its own 7z format usually compresses noticeably better than ZIP, and the whole thing is a 1.6 MB open-source download.",
+    long: "7-Zip packs and unpacks 7z, ZIP, TAR, GZIP and RAR among others, with AES-256 encryption for 7z and ZIP archives. Its own 7z format usually compresses noticeably better than ZIP, and the whole thing is a small open-source download.",
     features: ["Reads and writes a dozen archive formats", "AES-256 encrypted archives", "Split archives into volumes", "Shell integration and context menu", "Command line version included"],
     requirements: ["Windows 10 or 11", "10 MB free disk space"]
   },

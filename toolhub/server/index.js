@@ -191,7 +191,6 @@ async function renderIndex(req, res) {
             description: product.shortDescription,
             applicationCategory: product.category?.name,
             softwareVersion: product.version,
-            fileSize: product.fileSize,
             operatingSystem: product.requirements[0] ?? "Windows",
             image: product.thumbnail || undefined,
             offers: {

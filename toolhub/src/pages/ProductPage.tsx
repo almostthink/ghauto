@@ -6,7 +6,7 @@ import { ProductCard } from "../components/ProductCard";
 import { Turnstile } from "../components/Turnstile";
 import { ErrorState, Skeleton, StarRating, useToast } from "../components/ui";
 import { api, trackView } from "../lib/api";
-import { formatBytes, formatCompact, formatDate, formatNumber } from "../lib/format";
+import { formatCompact, formatDate, formatNumber } from "../lib/format";
 import { useConfig, useProduct, useRelatedProducts, useReviews, useSettings } from "../lib/queries";
 import { useSeo } from "../lib/seo";
 import type { Product } from "../lib/types";
@@ -156,7 +156,6 @@ export function ProductPage() {
           description: product.shortDescription,
           applicationCategory: product.category?.name,
           softwareVersion: product.version,
-          fileSize: product.fileSize,
           operatingSystem: product.requirements[0] ?? "Windows",
           image: product.thumbnail || undefined,
           offers: {
@@ -277,7 +276,6 @@ export function ProductPage() {
             <div className="detail-stats">
               <div><b>{showDownloads ? formatCompact(product.downloads) : "—"}</b><span>Downloads</span></div>
               <div><b>{product.version}</b><span>Version</span></div>
-              <div><b>{product.fileSize || "—"}</b><span>Size</span></div>
               <div><b>{formatDate(product.updatedAt)}</b><span>Updated</span></div>
             </div>
           </div>
@@ -340,7 +338,6 @@ export function ProductPage() {
               ["Category", product.category?.name ?? "—"],
               ["License", product.license || product.price],
               ["Version", product.version],
-              ["File size", product.fileSize || (product.fileBytes ? formatBytes(product.fileBytes) : "—")],
               ["Last update", formatDate(product.updatedAt)],
               ["Views", showDownloads ? formatCompact(product.views) : "—"]
             ].map(([label, value]) => (

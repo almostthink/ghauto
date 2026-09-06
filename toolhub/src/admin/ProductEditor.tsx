@@ -302,7 +302,7 @@ export function ProductEditor() {
               </select>
             </label>
             <label>Version<input {...register("version")} /></label>
-            <label>File size<input {...register("fileSize")} placeholder="38 MB" /></label>
+            <label>File size (admin only)<input {...register("fileSize")} placeholder="38 MB" /></label>
             <label>License<input {...register("license")} placeholder="Free / Premium / MIT" /></label>
             <label>Price label<input {...register("price")} placeholder="Free" /></label>
             <label>
