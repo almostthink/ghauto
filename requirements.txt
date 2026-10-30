@@ -1,2 +1,4 @@
 python-telegram-bot>=21,<22
 requests>=2.31
+# Нужен только для режима keephistory (/push ... keephistory):
+git-filter-repo>=2.45

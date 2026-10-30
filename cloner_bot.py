@@ -200,25 +200,23 @@ def parse_github_url(text: str):
     return owner, repo, f"https://github.com/{owner}/{repo}.git"
 
 
-def clone_repo(clone_url: str, dest_dir: str) -> None:
+def clone_repo(clone_url: str, dest_dir: str, full_history: bool = False) -> None:
     """
     Клонирует публичный репозиторий. Без учётных данных, поэтому приватные
     репозитории тут работать не будут (и не должны — бот только для публичных).
+
+    full_history=True клонирует всю историю ветки (нужно для режима
+    keephistory), иначе берётся только последний коммит (--depth).
     """
     env = dict(os.environ)
     # Запрещаем git спрашивать логин/пароль в терминале.
     env["GIT_TERMINAL_PROMPT"] = "0"
     env["GCM_INTERACTIVE"] = "never"
 
-    cmd = [
-        "git",
-        "clone",
-        "--depth",
-        str(CLONE_DEPTH),
-        "--single-branch",
-        clone_url,
-        dest_dir,
-    ]
+    cmd = ["git", "clone", "--single-branch"]
+    if not full_history:
+        cmd += ["--depth", str(CLONE_DEPTH)]
+    cmd += [clone_url, dest_dir]
     result = subprocess.run(
         cmd,
         env=env,
@@ -395,6 +393,86 @@ def push_cleaned_repo(src_dir: str, token: str, new_name: str, private: bool):
     return html_url, full_name
 
 
+# ========== РЕЖИМ С СОХРАНЕНИЕМ ИСТОРИИ (keephistory) ==========
+
+def history_rewrite_available() -> bool:
+    """Проверяет, установлен ли git-filter-repo (нужен для keephistory)."""
+    try:
+        r = subprocess.run(
+            ["git", "filter-repo", "--version"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            timeout=20,
+        )
+        return r.returncode == 0
+    except Exception:
+        return False
+
+
+def _build_filename_callback() -> str:
+    """
+    Собирает тело --filename-callback для git-filter-repo из тех же правил,
+    что используются для ZIP. Файл удаляется из ВСЕХ коммитов, если он
+    лежит в служебной папке, совпадает с точным именем или подходит под маску.
+    """
+    return (
+        "import fnmatch\n"
+        f"_DIRS = {EXCLUDE_DIRS!r}\n"
+        f"_EXACT = {EXCLUDE_EXACT!r}\n"
+        f"_GLOBS = {EXCLUDE_GLOBS!r}\n"
+        "p = filename.decode('utf-8', 'surrogateescape')\n"
+        "parts = p.split('/')\n"
+        "if any(seg in _DIRS for seg in parts[:-1]):\n"
+        "    return None\n"
+        "name = parts[-1].lower()\n"
+        "pl = p.lower()\n"
+        "if name in _EXACT:\n"
+        "    return None\n"
+        "for pat in _GLOBS:\n"
+        "    if fnmatch.fnmatch(name, pat) or fnmatch.fnmatch(pl, pat):\n"
+        "        return None\n"
+        "return filename\n"
+    )
+
+
+def rewrite_history_strip_sensitive(repo_dir: str) -> None:
+    """
+    Переписывает всю историю ветки, вырезая чувствительные файлы из каждого
+    коммита. Сообщения, авторы и даты коммитов сохраняются; коммиты, которые
+    после чистки стали пустыми, схлопываются. SHA коммитов меняются (это
+    неизбежно при переписывании истории).
+    """
+    cb = _build_filename_callback()
+    _run_git(["filter-repo", "--force", "--filename-callback", cb], cwd=repo_dir)
+
+
+def push_with_history(src_dir: str, token: str, new_name: str, private: bool):
+    """
+    Создаёт новый репозиторий и пушит в него уже переписанную историю.
+    git-filter-repo удаляет origin, поэтому добавляем свой заново.
+    Возвращает (html_url, full_name, branch).
+    """
+    repo = gh_create_repo(token, new_name, private)
+    full_name = repo["full_name"]
+    html_url = repo["html_url"]
+
+    branch = _run_git(["symbolic-ref", "--short", "HEAD"], cwd=src_dir).strip()
+    if not branch:
+        branch = "main"
+
+    push_url = f"https://{token}@github.com/{full_name}.git"
+    _run_git(["remote", "add", "origin", push_url], cwd=src_dir, token=token)
+    _run_git(["push", "-u", "origin", branch], cwd=src_dir, token=token)
+    # Теги, если есть.
+    try:
+        _run_git(["push", "origin", "--tags"], cwd=src_dir, token=token)
+    except Exception:
+        pass
+
+    return html_url, full_name, branch
+
+
 # ========== ОБРАБОТЧИКИ TELEGRAM ==========
 
 START_TEXT = (
@@ -412,8 +490,10 @@ START_TEXT = (
     "твоём GitHub (без секретов и без старой истории коммитов):\n"
     "1) один раз пришли токен:  /settoken <твой_PAT>\n"
     "   (PAT с правом repo, лучше в личке ... я удалю сообщение с токеном)\n"
-    "2) залей:  /push <ссылка> [имя_нового_репо] [public|private]\n\n"
-    "По умолчанию новый репозиторий приватный."
+    "2) залей:  /push <ссылка> [имя_нового_репо] [public|private] [keephistory]\n\n"
+    "По умолчанию новый репозиторий приватный и заливается одним чистым "
+    "коммитом. Добавь keephistory, чтобы сохранить всю историю коммитов "
+    "(секреты при этом вырезаются из всех коммитов)."
 )
 
 
@@ -482,7 +562,7 @@ async def push_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         await update.message.reply_text(
             "Использование: /push <ссылка на репозиторий> [имя_нового_репо] "
-            "[public|private]"
+            "[public|private] [keephistory]"
         )
         return
 
@@ -490,6 +570,7 @@ async def push_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     rest = context.args[1:]
 
     private = DEFAULT_NEW_REPO_PRIVATE
+    keep_history = False
     name = None
     for a in rest:
         low = a.lower()
@@ -497,6 +578,8 @@ async def push_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             private = False
         elif low == "private":
             private = True
+        elif low == "keephistory":
+            keep_history = True
         elif name is None:
             name = a
 
@@ -509,8 +592,16 @@ async def push_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not name:
         name = repo
 
+    if keep_history and not history_rewrite_available():
+        await update.message.reply_text(
+            "Режим keephistory требует git-filter-repo. Установите его:\n"
+            "pip install git-filter-repo"
+        )
+        return
+
+    mode = "с сохранением истории" if keep_history else "одним чистым коммитом"
     status = await update.message.reply_text(
-        f"Клонирую {owner}/{repo} и готовлю заливку в новый репозиторий '{name}' ..."
+        f"Клонирую {owner}/{repo} и готовлю заливку в '{name}' ({mode}) ..."
     )
 
     workdir = tempfile.mkdtemp(prefix="ghpush_")
@@ -518,7 +609,7 @@ async def push_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         try:
-            clone_repo(clone_url, repo_dir)
+            clone_repo(clone_url, repo_dir, full_history=keep_history)
         except Exception as e:
             await status.edit_text(
                 f"Не удалось склонировать (возможно, приватный или не существует):\n"
@@ -526,6 +617,37 @@ async def push_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             return
 
+        vis = "приватный" if private else "публичный"
+
+        if keep_history:
+            await status.edit_text(
+                "Вырезаю чувствительные файлы из всей истории коммитов ..."
+            )
+            try:
+                rewrite_history_strip_sensitive(repo_dir)
+            except Exception as e:
+                await status.edit_text(
+                    f"Ошибка при чистке истории:\n{_scrub(str(e), token)}"
+                )
+                return
+
+            await status.edit_text(f"Создаю репозиторий '{name}' и пушу историю ...")
+            try:
+                html_url, full_name, branch = push_with_history(
+                    repo_dir, token, name, private
+                )
+            except Exception as e:
+                await status.edit_text(f"Ошибка заливки:\n{_scrub(str(e), token)}")
+                return
+
+            await status.edit_text(
+                f"Готово ✅ {vis} репозиторий создан, история сохранена "
+                f"(ветка {branch}), чувствительные файлы вырезаны из всех "
+                f"коммитов:\n{html_url}"
+            )
+            return
+
+        # Обычный режим: одна чистая ревизия без старой истории.
         await status.edit_text("Вырезаю чувствительные файлы и старую историю ...")
         skipped = prune_tree(repo_dir)
 
@@ -536,7 +658,6 @@ async def push_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await status.edit_text(f"Ошибка заливки:\n{_scrub(str(e), token)}")
             return
 
-        vis = "приватный" if private else "публичный"
         tail = ""
         if skipped:
             tail = f"\nВырезано чувствительных файлов: {len(skipped)}"
